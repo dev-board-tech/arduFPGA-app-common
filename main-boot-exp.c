@@ -30,7 +30,6 @@
 #include "25flash.h"
 #include "mmc_sd_spi.h"
 #include "fat_fs/inc/ff.h"
-#include "fat_fs/fat.h"
 
 box_t box = {0, 128, 0, 64};
 

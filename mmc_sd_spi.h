@@ -26,7 +26,6 @@
 #include <stdbool.h>
 #include "spi.h"
 #include "fat_fs/inc/ff.h"
-#include "fat_fs/fat.h"
 
 
 /*
