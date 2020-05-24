@@ -28,14 +28,14 @@
 #include "spi.h"
 #include "25flash.h"
 #include "delay.h"
-#include "uart.h"
-
 
 volatile void *sp_value __attribute__ ((section (".data"))) = 0;
 volatile int16_t cnt_int_key_k;
 volatile uint8_t pushed;
 volatile bool after_power_up = true;
 uint8_t flash_buf[256];
+volatile uint8_t led_color = 0;
+volatile bool led_state;
 
 spi_t spi;
 uint8_t screen_buf[1];
@@ -203,7 +203,7 @@ void flash_load (uint32_t flash_app_addr, bool eep_load) {
 	F_CNT_L = 0;
 	F_CNT_H = 0;
 
-	PORTB = 0b00100000;
+	PORTB = LED_R;
 	/* Load the APP size. */
 	_25flash_read(&flash_des, flash_app_addr + FLASH_APP_MEMORY_SIZES_OFFSET + FLASH_APP_MEMORY_SIZES_PGM_OFFSET, flash_buf, 4);
 	uint32_t app_size = (uint32_t)flash_buf[3] << 24 | (uint32_t)flash_buf[2] << 16 | (uint32_t)flash_buf[1] << 8 | (uint32_t)flash_buf[0];
@@ -222,7 +222,7 @@ void flash_load (uint32_t flash_app_addr, bool eep_load) {
 	}
 	BOOT_STAT &= ~BOOT_STAT_APP_PGM_WR_EN;
 
-	PORTB = 0b01000000;
+	PORTB = LED_B;
 }
 
 void init() {
@@ -275,14 +275,18 @@ int main(void)
 	}
 
 #ifdef POWER_UP_WITH_USER_APP	
-	_25flash_read(&flash_des, FLASH_APP_USER_START_ADDR, flash_buf, 4);
+// If at power UP the L button is pressed will skip loading the user application, will load the GUI boot-loader.
+// If in the user application is something wrong and freezes the core, user has a way to avoid loading the APP and load the GUI boot-loader instead.
+	if(KBD_IN & KBD_K_PIN) {
+		_25flash_read(&flash_des, FLASH_APP_USER_START_ADDR, flash_buf, 4);
 // After power UP check if a user application is written in the FLASH, if not, proceed with launching the explorer.
-	if(after_power_up) {
-		after_power_up = false;
-		if((flash_buf[0] != 0xFF || flash_buf[1] != 0xFF || flash_buf[2] != 0xFF || flash_buf[3] != 0xFF)) {
-			BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING;
-			BOOT_STAT |= BOOT_STAT_FLASH_APP_NR;
-			flash_app_addr = FLASH_APP_USER_START_ADDR;
+		if(after_power_up) {
+			after_power_up = false;
+			if((flash_buf[0] != 0xFF || flash_buf[1] != 0xFF || flash_buf[2] != 0xFF || flash_buf[3] != 0xFF)) {
+				BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING;
+				BOOT_STAT |= BOOT_STAT_FLASH_APP_NR;
+				flash_app_addr = FLASH_APP_USER_START_ADDR;
+			}
 		}
 	}
 #endif
@@ -294,7 +298,7 @@ int main(void)
 }
 
 void _int(void) __attribute__ ((signal,__INTR_ATTRS));
-void _int() {
+void _int(void) {
 	if(KBD_IN & KBD_INT_PIN) {
 		cnt_int_key_k = 0;
 		pushed &= ~KBD_INT_PIN;
@@ -302,20 +306,63 @@ void _int() {
 		if(cnt_int_key_k != 20) {
 			cnt_int_key_k++;
 		} else {
+/*
+ * If the INT button was pressed more than two seconds.
+ */
 			if (~pushed & KBD_INT_PIN) {
-				if(BOOT_STAT & BOOT_STAT_USR_APP_RUNNING) {
-					SPI_SSD1306_CS_DEASSERT();
-					SPI_uSD_CS_DEASSERT();
-					SPI_ADC_CS_DEASSERT();
-					SPI_DES_CS_DEASSERT();
-					SPI_APP_CS_DEASSERT();
-					flash_load(FLASH_APP_EXPLORER_START_ADDR, false);
-					BOOT_STAT &= ~BOOT_STAT_USR_APP_RUNNING;
-					BOOT_STAT &= ~BOOT_STAT_FLASH_APP_NR;
-					DDRB = 0b11100000;
-					PORTB = 0b11100000;
-					asm("sei");
-					asm("jmp 0x0000");
+/*
+ * Parse the reason of INT pressing.
+ */
+				if(~KBD_IN & KBD_B_PIN) {
+/*
+ * Change the color of the LED in order: R, G, B, OFF.
+ */
+					led_state = false;
+					switch(led_color) {
+						case 0:
+							PORTB = LED_R;
+							led_color++;
+							break;
+						case 1:
+							PORTB = LED_G;
+							led_color++;
+							break;
+						case 2:
+							PORTB = LED_B;
+							led_color++;
+							break;
+						case 3:
+							PORTB = 0;
+							led_color = 0;
+							break;
+					}
+				} else if(~KBD_IN & KBD_K_PIN) {
+					led_color = 0;
+/*
+ * Lantern function, ON, OF led in WHITE mode.
+ */
+					if(!led_state) {
+						led_state = true;
+						PORTB = LED_R | LED_G | LED_B;
+					} else {
+						led_state = false;
+						PORTB = 0;
+					}
+				} else {
+					if(BOOT_STAT & BOOT_STAT_USR_APP_RUNNING) {
+						SPI_SSD1306_CS_DEASSERT();
+						SPI_uSD_CS_DEASSERT();
+						SPI_ADC_CS_DEASSERT();
+						SPI_DES_CS_DEASSERT();
+						SPI_APP_CS_DEASSERT();
+						flash_load(FLASH_APP_EXPLORER_START_ADDR, false);
+						BOOT_STAT &= ~BOOT_STAT_USR_APP_RUNNING;
+						BOOT_STAT &= ~BOOT_STAT_FLASH_APP_NR;
+						led_state = false;
+						led_color = 0;
+						asm("sei");
+						asm("jmp 0x0000");
+					}
 				}
 			}
 			pushed |= KBD_INT_PIN;
