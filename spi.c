@@ -38,6 +38,12 @@ void spi_init(spi_t *inst) {
 #ifdef SPI_CS_5_PORT
 	SPI_CS_5_DIR |= SPI_CS_5_PIN;
 #endif
+#ifdef SPI_CS_6_PORT
+	SPI_CS_6_DIR |= SPI_CS_6_PIN;
+#endif
+#ifdef SPI_CS_7_PORT
+	SPI_CS_7_DIR |= SPI_CS_7_PIN;
+#endif
 	SPI_SCK_DIR |= SPI_SCK_PIN;
 	SPI_MOSI_DIR |= SPI_MOSI_PIN;
 	*inst->spcr = (1<<SPE) | (1<<MSTR);
