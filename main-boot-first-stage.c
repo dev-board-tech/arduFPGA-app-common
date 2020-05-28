@@ -254,6 +254,8 @@ int main(void)
 	SPI_ADC_CS_DEASSERT();
 	SPI_DES_CS_DEASSERT();
 	SPI_APP_CS_DEASSERT();
+	SPI_xCS_CS_DEASSERT();
+	SPI_xDCS_CS_DEASSERT();
 	
 	spi.spcr = &SPCR;
 	spi.spsr = &SPSR;
@@ -355,6 +357,8 @@ void _int(void) {
 						SPI_ADC_CS_DEASSERT();
 						SPI_DES_CS_DEASSERT();
 						SPI_APP_CS_DEASSERT();
+						SPI_xCS_CS_DEASSERT();
+						SPI_xDCS_CS_DEASSERT();
 						flash_load(FLASH_APP_EXPLORER_START_ADDR, false);
 						BOOT_STAT &= ~BOOT_STAT_USR_APP_RUNNING;
 						BOOT_STAT &= ~BOOT_STAT_FLASH_APP_NR;
