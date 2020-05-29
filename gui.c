@@ -69,7 +69,9 @@ void gui_idle(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 /*****************************************/
 // Check if a design update has been found.
 /*****************************************/
-				util_design_app_update(uSD, spi_screen, screen_buf, true);
+				if(util_design_app_update(uSD, spi_screen, screen_buf, true)) {
+					while(1);
+				}
 /*****************************************/
 // !Check if a design update has been found.
 /*****************************************/
