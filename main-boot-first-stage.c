@@ -35,7 +35,6 @@ volatile uint8_t pushed;
 volatile bool after_power_up = true;
 uint8_t flash_buf[256];
 volatile uint8_t led_color = 0;
-volatile bool led_state;
 
 spi_t spi;
 uint8_t screen_buf[1];
@@ -319,7 +318,6 @@ void _int(void) {
 /*
  * Change the color of the LED in order: R, G, B, OFF.
  */
-					led_state = false;
 					switch(led_color) {
 						case 0:
 							PORTB = LED_R;
@@ -343,12 +341,10 @@ void _int(void) {
 /*
  * Lantern function, ON, OF led in WHITE mode.
  */
-					if(!led_state) {
-						led_state = true;
-						PORTB = LED_R | LED_G | LED_B;
-					} else {
-						led_state = false;
+					if(PORTB & (LED_R | LED_G | LED_B)) {
 						PORTB = 0;
+					} else {
+						PORTB = LED_R | LED_G | LED_B;
 					}
 				} else {
 					if(BOOT_STAT & BOOT_STAT_USR_APP_RUNNING) {
@@ -362,7 +358,6 @@ void _int(void) {
 						flash_load(FLASH_APP_EXPLORER_START_ADDR, false);
 						BOOT_STAT &= ~BOOT_STAT_USR_APP_RUNNING;
 						BOOT_STAT &= ~BOOT_STAT_FLASH_APP_NR;
-						led_state = false;
 						led_color = 0;
 						asm("sei");
 						asm("jmp 0x0000");
