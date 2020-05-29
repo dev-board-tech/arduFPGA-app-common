@@ -314,7 +314,7 @@ void _int(void) {
 /*
  * Parse the reason of INT pressing.
  */
-				if(~KBD_IN & KBD_B_PIN) {
+				if(~KBD_IN & KBD_U_PIN) {
 /*
  * Change the color of the LED in order: R, G, B, OFF.
  */
@@ -336,10 +336,10 @@ void _int(void) {
 							led_color = 0;
 							break;
 					}
-				} else if(~KBD_IN & KBD_K_PIN) {
+				} else if(~KBD_IN & KBD_D_PIN) {
 					led_color = 0;
 /*
- * Lantern function, ON, OF led in WHITE mode.
+ * Lantern flashlight, ON, OF led in WHITE mode.
  */
 					if(PORTB & (LED_R | LED_G | LED_B)) {
 						PORTB = 0;
@@ -347,6 +347,9 @@ void _int(void) {
 						PORTB = LED_R | LED_G | LED_B;
 					}
 				} else {
+/*
+ * Load GUI boot-loader only if user APP is running.
+ */
 					if(BOOT_STAT & BOOT_STAT_USR_APP_RUNNING) {
 						SPI_SSD1306_CS_DEASSERT();
 						SPI_uSD_CS_DEASSERT();

@@ -31,6 +31,8 @@
 #include "mmc_sd_spi.h"
 #include "fat_fs/inc/ff.h"
 
+uint8_t *io_s;
+
 box_t box = {0, 128, 0, 64};
 
 
@@ -53,7 +55,11 @@ bool usd_state;
 
 int main(void)
 {
-    asm("cli");
+	asm("cli");
+/*	for (int16_t cnt = 0; cnt < 240; cnt++) {
+		(*(uint8_t *)cnt) = 0;
+	}
+	asm("sei");*/
 	spi.spcr = &SPCR;
 	spi.spsr = &SPSR;
 	spi.spdr = &SPDR;
