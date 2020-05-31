@@ -22,6 +22,7 @@
 #include "def.h"
 #include "delay.h"
 #include "fat_fs/inc/diskio.h"
+#include <avr/interrupt.h>
 
 //#######################################################################################
 uint8_t ioData(mmc_sd_t *inst, uint8_t value)
@@ -277,8 +278,15 @@ unsigned int readPage(mmc_sd_t *inst, void* _Buffer, unsigned long block, unsign
 //#######################################################################################
 unsigned int mmcSdSpiRead(void *handler, void* _Buffer, unsigned long _block, unsigned int nblks)
 {
-	if(!handler)
+#ifndef GUI_EXPLORER
+	cli();
+#endif
+	if(!handler) {
+#ifndef GUI_EXPLORER
+		sei();
+#endif
 		return false;
+	}
 	mmc_sd_t *inst = (mmc_sd_t *)handler;
 #ifdef uSD_LED_PORT
 		uSD_LED_PORT |= uSD_LED_PIN;
@@ -291,6 +299,9 @@ unsigned int mmcSdSpiRead(void *handler, void* _Buffer, unsigned long _block, un
 			if(uSD_LED_PORT)
 				uSD_LED_PORT &= ~uSD_LED_PIN;
 #endif
+#ifndef GUI_EXPLORER
+			sei();
+#endif
 			return false;
 		}
 		Buffer += 512;
@@ -298,6 +309,9 @@ unsigned int mmcSdSpiRead(void *handler, void* _Buffer, unsigned long _block, un
 #ifdef uSD_LED_PORT
 	if(uSD_LED_PORT)
 		uSD_LED_PORT &= ~uSD_LED_PIN;
+#endif
+#ifndef GUI_EXPLORER
+	sei();
 #endif
 	return true;
 }
@@ -378,8 +392,15 @@ unsigned int writePage(mmc_sd_t *inst, void* _Buffer, unsigned long block, unsig
 //#######################################################################################
 unsigned int mmcSdSpiWrite(void *handler, void* _Buffer, unsigned long _block, unsigned int nblks)
 {
-	if(!handler)
-	return false;
+#ifndef GUI_EXPLORER
+	cli();
+#endif
+	if(!handler) {
+#ifndef GUI_EXPLORER
+		sei();
+#endif
+		return false;
+	}
 	mmc_sd_t *inst = (mmc_sd_t *)handler;
 #ifdef uSD_LED_PORT
 	if(uSD_LED_PORT)
@@ -393,6 +414,9 @@ unsigned int mmcSdSpiWrite(void *handler, void* _Buffer, unsigned long _block, u
 			if(uSD_LED_PORT)
 				uSD_LED_PORT &= ~uSD_LED_PIN;
 #endif
+#ifndef GUI_EXPLORER
+			sei();
+#endif
 			return false;
 		}
 		Buffer += 512;
@@ -400,6 +424,9 @@ unsigned int mmcSdSpiWrite(void *handler, void* _Buffer, unsigned long _block, u
 #ifdef uSD_LED_PORT
 	if(uSD_LED_PORT)
 		uSD_LED_PORT &= ~uSD_LED_PIN;
+#endif
+#ifndef GUI_EXPLORER
+	sei();
 #endif
 	return true;
 }

@@ -29,7 +29,9 @@
 #include "fat_fs/inc/ff.h"
 #include "ffconf.h"
 #include "kbd.h"
-#include "util-exp.h"
+#include GUI_UTIL_FILE_INCLUDE
+
+
 
 uint16_t menu_pos = 0;
 uint16_t menu_sel = 0;
@@ -43,12 +45,12 @@ FILINFO fInfo;
 FIL filObject;
 bool fs_mounted = false;
 
-const char design_update_err_message[] PROGMEM = "Err reading design update...\r\nThe design need to be loaded\r\n with a programmer";
-
 extern _25flash_t flash_des;
 //extern _25flash_t flash_app;
 
 bool gui_initialized = false;
+
+const char file_ext_filter[][4] PROGMEM = GUI_LIST_OF_DISPLAYED_EXTENSIONS;
 
 void gui_init(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 	kbd_init();
@@ -60,98 +62,7 @@ void gui_idle(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 // Check if the FS is mounted, if it is, open the root directory.
 	if(uSD->fs_mounted != fs_mounted && uSD->fs_mounted) {
 		fs_mounted = true;
-		if(f_opendir(&dirObject, "/") == FR_OK) {
-			f_chdir("/");
-			if(!gui_initialized) {
-				gui_initialized = true;
-				uint8_t buf[64];
-#ifdef USE_DESIGN_UPGRADE
-/*****************************************/
-// Check if a design update has been found.
-/*****************************************/
-				if(util_design_app_update(uSD, spi_screen, screen_buf, true)) {
-					while(1);
-				}
-/*****************************************/
-// !Check if a design update has been found.
-/*****************************************/
-#endif
-/*****************************************/
-// Read the last opened application path.
-/*****************************************/
-//Check for current.txt file at startup.
-				if(f_open(&filObject, "current.txt", FA_READ) == FR_OK) {
-					UINT b_read = 0x00;
-					f_rewind(&filObject);
-					if(f_read(&filObject, buf, f_size(&filObject), &b_read) == FR_OK) {
-						if(f_size(&filObject) != b_read) {
-							return;
-						}
-						f_close(&filObject);
-						char tmp_buf[16];
-						char filename[27];
-						bool fallow_ok = util_fallow_path(tmp_buf, (char *)buf);
-// Extract the name with extension of the application.
-						util_get_filename(filename, (char *)buf);
-/*****************************************/
-// Check if EEPROM was edited.
-/*****************************************/
-// If EEPROM was edited then the explorer was oppened after a user application was interrupted, if EEPROM was not edited then the explorer is opened after a user application was interrupted or after a power up (no need to save EEPROM to uSD).
-						if(BOOT_STAT & BOOT_STAT_EEP_EDITED) {
-							BOOT_STAT &= ~BOOT_STAT_EEP_EDITED;
-// Check if the path was successfully fallow.
-							if(fallow_ok) {
-								util_change_extension(filename, filename, PSTR("eep"));
-								bool eep_different = false;
-// Try to open the EEPROM file.
-								if(f_open(&filObject, filename, FA_READ) == FR_OK) { 
-// File exist, compare it, we do not want to wear out the uSD with the same data.
-									for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt += 0x20) {
-										eeprom_read_block(buf + 0x20, (void *)cnt, 0x20);
-										if(f_read(&filObject, buf, 0x20, &b_read) == FR_OK) {
-											if(memcmp(buf + 0x20, buf, 0x20)) {
-												eep_different = true;
-												break;
-											}
-										}
-									}
-									f_close(&filObject);
-								} else { 
-// File does not exist.
-									eep_different = true;
-								}
-// File does not exist or is not the same as in EEPROM, save it to uSD.
-								if(eep_different) {
-									if(f_open(&filObject, filename, FA_CREATE_ALWAYS | FA_WRITE) == FR_OK) {
-										UINT b_write = 0x00;
-										for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt += 0x40) {
-											eeprom_read_block(buf, (void *)cnt, 0x40);
-											if(f_write(&filObject, buf, 0x40, &b_write) == FR_OK) {
-												if(b_write != 0x40) {
-													f_unlink(filename);
-													return;
-												}
-											}
-										}
-										f_truncate(&filObject);
-										f_close(&filObject);
-// There is an ERROR in write function, the uSD remain locked after the file is write and closed when you try to reinitialize the uSD.
-// I add a open statement this seems to unlock the uSD.
-										f_open(&filObject, filename, FA_READ);
-									}
-								}
-							}
-/*****************************************/
-// !Check if EEPROM was edited.
-/*****************************************/
-						}
-					}
-/*****************************************/
-// !Read the last opened application path.
-/*****************************************/
-				}
-			}
-		}
+		GUI_ACT_AT_uSD_INSERT(uSD, spi_screen, screen_buf);
 	} else {
 		if(uSD->fs_mounted != fs_mounted && ~uSD->fs_mounted) {
 			fs_mounted = false;
@@ -192,7 +103,7 @@ void gui_idle(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 				}
 			} else {
 //Open selected file and load it.
-				util_app_load(uSD, spi_screen, screen_buf);
+				GUI_ACT_FUNC_ON_FILE_SELECT(uSD, spi_screen, screen_buf);
 			}
 		} else
 		if(kbd_state & KBD_B_KEY) {
@@ -203,6 +114,16 @@ void gui_idle(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 			gui_paint(uSD, spi_screen, screen_buf);
 		}
 	}
+}
+
+bool gui_is_extension(char *ext) {
+	uint8_t cnt = 0;
+	for(cnt = 0; cnt < sizeof(file_ext_filter) / sizeof(file_ext_filter[0]); cnt++) {
+		if(!strcmp_P(fInfo.altname + strlen(fInfo.altname) - 3, file_ext_filter[cnt])) {
+			return true;
+		}
+	}
+	return false;
 }
 
 void gui_paint(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
@@ -220,7 +141,7 @@ void gui_paint(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 					break;
 				}
 // Filter, display only files with .app extension and the sub directory's.
-				if(res == FR_OK && (!strcmp(fInfo.altname + strlen(fInfo.altname) - 3, "APP") || fInfo.fattrib & AM_DIR)/*  && (fInfo.fattrib & AM_ARC)*/ ) {
+				if(res == FR_OK && (/*!strcmp(fInfo.altname + strlen(fInfo.altname) - 3, "APP")*/ gui_is_extension(fInfo.altname + strlen(fInfo.altname) - 3) || fInfo.fattrib & AM_DIR)/*  && (fInfo.fattrib & AM_ARC)*/ ) {
 // Print only what is inside display window.
 					if(menu_scan >= menu_pos && menu_scan < menu_pos + 8) {
 						if(menu_scan == menu_sel) {
