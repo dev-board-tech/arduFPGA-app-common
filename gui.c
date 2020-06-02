@@ -32,11 +32,11 @@
 #include GUI_UTIL_FILE_INCLUDE
 
 
-uint8_t disp_up_limit = 0;
-uint8_t disp_dn_limit = 0;
+uint8_t disp_up_limit = GUI_UPPER_LIMIT_ROW;
+uint8_t disp_dn_limit = GUI_LOWER_LIMIT_ROW;
 uint16_t menu_pos = 0;
 uint16_t menu_sel = 0;
-uint16_t file_checked = 0;
+uint16_t file_checked = -1;
 uint16_t path_cnt = 0;
 uint16_t path_sel_cnt = 0;
 uint16_t items_scanned = 0;
@@ -54,9 +54,6 @@ bool gui_initialized = false;
 const char file_ext_filter[][4] PROGMEM = GUI_LIST_OF_DISPLAYED_EXTENSIONS;
 
 void gui_init(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
-	disp_up_limit = 0;
-	disp_dn_limit = 7;
-	file_checked = -1;
 	kbd_init();
 	gui_idle(uSD, spi_screen, screen_buf);
 	gui_paint(uSD, spi_screen, screen_buf);
