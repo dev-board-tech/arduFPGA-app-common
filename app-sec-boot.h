@@ -48,7 +48,7 @@ extern bool gui_initialized;
 
 const char design_update_err_message[] PROGMEM = "Err reading design update...\r\nThe design need to be loaded\r\n with a programmer";
 
-inline void util_strip_extension(char *ret_path, char *path) {
+inline void app_strip_extension(char *ret_path, char *path) {
 	char *path_int = path + strlen(path);
 	do
 	{
@@ -63,7 +63,7 @@ inline void util_strip_extension(char *ret_path, char *path) {
 	}
 }
 
-inline char *util_get_path(char *ret_path, char *ptr) {
+inline char *app_get_path(char *ret_path, char *ptr) {
 // Check if a separator exists.
 	char *start_ptr = strchr(ptr, '/');
 // If a separator does not exists signify that is not a path.
@@ -84,7 +84,7 @@ inline char *util_get_path(char *ret_path, char *ptr) {
 	return end_ptr; 
 }
 
-inline void util_get_filename(char *ret_path, char *path) {
+inline void app_get_filename(char *ret_path, char *path) {
 	char *path_int = path + strlen(path);
 // Scan for the first separator from the right to left.
 	do {
@@ -96,7 +96,7 @@ inline void util_get_filename(char *ret_path, char *path) {
 	}
 }
 
-inline void util_get_extension(char *ret_path, char *path) {
+inline void app_get_extension(char *ret_path, char *path) {
 	char *path_int = path + strlen(path);
 	do
 	{
@@ -107,7 +107,7 @@ inline void util_get_extension(char *ret_path, char *path) {
 	}
 }
 
-inline void util_change_extension(char *ret_path, char *path, const char *extension) {
+inline void app_change_extension(char *ret_path, char *path, const char *extension) {
 	char *path_int = path + strlen(path);
 // Scan for the first dot from right to left.
 	do {
@@ -128,13 +128,13 @@ inline void util_change_extension(char *ret_path, char *path, const char *extens
 	}
 }
 
-inline bool util_fallow_path(char *tmp_buf, char *path) {
+inline bool app_fallow_path(char *tmp_buf, char *path) {
 // Extract the path to the application.
 	char *ptr = (char*)path;
 // Navigate to the APP directory.
 	bool fallow_ok = true;
 	f_closedir(&dirObject);
-	while ((ptr = util_get_path(tmp_buf, ptr))) {
+	while ((ptr = app_get_path(tmp_buf, ptr))) {
 		if(f_opendir(&dirObject, tmp_buf) == FR_OK){
 			f_chdir(tmp_buf);
 			} else {
@@ -149,7 +149,7 @@ inline bool util_fallow_path(char *tmp_buf, char *path) {
 }
 // If des.bin and app.bin are found in the root, it will ask for update, these files will be deleted.
 // If des.bin and app.bin are found in the platform directory, will update the design and explorer without asking for update, is considered a change in used platform, these files will not be deleted.
-inline bool util_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf, bool ask_update) {
+inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf, bool ask_update) {
 	bool des_need_update = false;
 	bool boot_need_update = false;
 	if(ask_update) {
@@ -309,10 +309,10 @@ inline bool util_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *sc
 	return false;
 }
 
-inline void util_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
+inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 	uint8_t flash_buf[64];
 	UINT b_read = 0x40;
-	bool des_updated = util_design_app_update(uSD, spi_screen, screen_buf, false);
+	bool des_updated = app_design_app_update(uSD, spi_screen, screen_buf, false);
 	if(f_open(&filObject, nameBuff, FA_READ) == FR_OK && !des_updated) {
 		bool different = false;
 		uint32_t cnt = 0;
@@ -338,7 +338,7 @@ inline void util_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf)
 			f_close(&filObject);
 			gui_print_status(spi_screen, screen_buf, PSTR("APP is the same."), 128);
 			// Check if a EEPROM file is on the uSD, if it is copy the data into internal emulated EEPROM.
-			util_change_extension(nameBuff, nameBuff, PSTR("eep"));
+			app_change_extension(nameBuff, nameBuff, PSTR("eep"));
 			if(f_open(&filObject, nameBuff, FA_READ) == FR_OK) {
 				for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt+= 0x40) {
 					if(f_read(&filObject, flash_buf, 0x40, &b_read) == FR_OK) {
@@ -388,7 +388,7 @@ inline void util_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf)
 		}
 		f_close(&filObject);
 		// Check if a EEPROM file is on the uSD, if it is copy the data into internal emulated EEPROM.
-		util_change_extension(nameBuff, nameBuff, PSTR("eep"));
+		app_change_extension(nameBuff, nameBuff, PSTR("eep"));
 		if(f_open(&filObject, nameBuff, FA_READ) == FR_OK) {
 			for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt+= 0x40) {
 				if(f_read(&filObject, flash_buf, 0x40, &b_read) == FR_OK) {
@@ -401,7 +401,7 @@ inline void util_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf)
 		}
 		// Save the current loaded APP path, including APP name and extension, into the root directory "current.txt" file.
 		// This way will know at returning from the user APP, where to save the EEPROM and in future releases the RAM content.
-		util_change_extension(nameBuff, nameBuff, PSTR("app"));
+		app_change_extension(nameBuff, nameBuff, PSTR("app"));
 		f_closedir(&dirObject);
 		f_getcwd((TCHAR*)flash_buf, 0x40);
 		strcat((char*)flash_buf, "/");
@@ -435,7 +435,7 @@ inline void util_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf)
 	} else if(des_updated){
 		// Save the current loaded APP path, including APP name and extension, into the root directory "current.txt" file.
 		// This way will know at returning from the user APP, where to save the EEPROM and in future releases the RAM content.
-		util_change_extension(nameBuff, nameBuff, PSTR("app"));
+		app_change_extension(nameBuff, nameBuff, PSTR("app"));
 		f_closedir(&dirObject);
 		f_getcwd((TCHAR*)flash_buf, 0x40);
 		strcat((char*)flash_buf, "/");
@@ -462,7 +462,7 @@ inline void util_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf)
 	}
 }
 
-inline void util_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
+inline void app_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 	if(f_opendir(&dirObject, "/") == FR_OK) {
 		f_chdir("/");
 		if(!gui_initialized) {
@@ -472,7 +472,7 @@ inline void util_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen
 			/*****************************************/
 			// Check if a design update has been found.
 			/*****************************************/
-			if(util_design_app_update(uSD, spi_screen, screen_buf, true)) {
+			if(app_design_app_update(uSD, spi_screen, screen_buf, true)) {
 				while(1);
 			}
 			/*****************************************/
@@ -493,9 +493,9 @@ inline void util_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen
 					f_close(&filObject);
 					char tmp_buf[16];
 					char filename[27];
-					bool fallow_ok = util_fallow_path(tmp_buf, (char *)buf);
+					bool fallow_ok = app_fallow_path(tmp_buf, (char *)buf);
 					// Extract the name with extension of the application.
-					util_get_filename(filename, (char *)buf);
+					app_get_filename(filename, (char *)buf);
 					/*****************************************/
 					// Check if EEPROM was edited.
 					/*****************************************/
@@ -504,7 +504,7 @@ inline void util_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen
 						BOOT_STAT &= ~BOOT_STAT_EEP_EDITED;
 						// Check if the path was successfully fallow.
 						if(fallow_ok) {
-							util_change_extension(filename, filename, PSTR("eep"));
+							app_change_extension(filename, filename, PSTR("eep"));
 							bool eep_different = false;
 							// Try to open the EEPROM file.
 							if(f_open(&filObject, filename, FA_READ) == FR_OK) {
