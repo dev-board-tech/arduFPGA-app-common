@@ -1,5 +1,5 @@
 /*
- * SSD1331 OLED display driver for BOOT-LOADRER of ARDUFPGA soft core design.
+ * SSD1331 OLED display driverfile for arduFPGA designs
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 
@@ -76,10 +76,10 @@ void ssd1331_on(spi_t *inst, bool state);
 void ssd1331_set_contrast(spi_t *inst, uint8_t cont);
 uint16_t ssd1331_get_x(void);
 uint16_t ssd1331_get_y(void);
-void ssd1331_put_pixel(spi_t *inst, box_t *box, int16_t x, int16_t y, bool state);
-void ssd1331_put_rectangle(spi_t *inst, box_t *box, int16_t x, int16_t y, int16_t x_size, int16_t y_size, bool fill, bool state);
-void ssd1331_put_h_line(spi_t *inst, box_t *box, int16_t x1, int16_t x2, int16_t y, uint8_t width, bool state);
-void ssd1331_put_v_line(spi_t *inst, box_t *box, int16_t y1, int16_t y2, int16_t x, uint8_t width, bool state);
+void ssd1331_draw_pixel(spi_t *inst, box_t *box, int16_t x, int16_t y, bool state);
+void ssd1331_draw_rectangle(spi_t *inst, box_t *box, int16_t x, int16_t y, int16_t x_size, int16_t y_size, bool fill, bool state);
+void ssd1331_draw_h_line(spi_t *inst, box_t *box, int16_t x1, int16_t x2, int16_t y, uint8_t width, bool state);
+void ssd1331_draw_v_line(spi_t *inst, box_t *box, int16_t y1, int16_t y2, int16_t x, uint8_t width, bool state);
 void ssd1331_clear(spi_t *inst, bool state);
 int ssd1331_draw_string(spi_t *inst, box_t *box, char *string, int16_t x, int16_t y, bool terminalMode, bool wordWrap, bool foreColor, bool inkColor);
 

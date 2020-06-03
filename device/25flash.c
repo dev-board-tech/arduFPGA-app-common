@@ -1,5 +1,5 @@
 /*
- * 25 series of SPI FLASH memory driver.
+ * 25 series of SPI FLASH memory driver file for arduFPGA designs.
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 

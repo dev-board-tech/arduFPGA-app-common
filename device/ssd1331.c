@@ -1,5 +1,5 @@
 /*
- * SSD1331 OLED display driver for BOOT-LOADRER of ARDUFPGA soft core design.
+ * SSD1331 OLED display driverfile for arduFPGA designs
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 
@@ -212,7 +212,7 @@ uint16_t ssd1331_get_y(void) {
 	return 64;
 }
 
-void ssd1331_put_pixel(spi_t *inst, box_t *box, int16_t x, int16_t y, bool state) {
+void ssd1331_draw_pixel(spi_t *inst, box_t *box, int16_t x, int16_t y, bool state) {
 	/* Check if outside the display */
 	if(x < 0 || y < 0 || y > 63)
 		return;
@@ -239,7 +239,7 @@ void ssd1331_put_pixel(spi_t *inst, box_t *box, int16_t x, int16_t y, bool state
 	SPI_SSD1331_CS_DEASSERT();
 }
 
-void ssd1331_put_rectangle(spi_t *inst, box_t *box, int16_t x, int16_t y, int16_t x_size, int16_t y_size, bool fill, bool state) {
+void ssd1331_draw_rectangle(spi_t *inst, box_t *box, int16_t x, int16_t y, int16_t x_size, int16_t y_size, bool fill, bool state) {
 	box_t box__;
 	if(box) {
 		box__.x_min = box->x_min;
@@ -287,7 +287,7 @@ void ssd1331_put_rectangle(spi_t *inst, box_t *box, int16_t x, int16_t y, int16_
 	delay_ms(3);
 }
 
-void ssd1331_put_h_line(spi_t *inst, box_t *box, int16_t x1, int16_t x2, int16_t y, uint8_t width, bool state) {
+void ssd1331_draw_h_line(spi_t *inst, box_t *box, int16_t x1, int16_t x2, int16_t y, uint8_t width, bool state) {
 	box_t box__;
 	if(box) {
 		box__.x_min = box->x_min;
@@ -318,11 +318,11 @@ void ssd1331_put_h_line(spi_t *inst, box_t *box, int16_t x1, int16_t x2, int16_t
 	for(;X1_Tmp < X2_Tmp; X1_Tmp++) {
 		int16_t _Y_ = y - Half_width1;
 		for(; _Y_ < y + Half_width2; _Y_++)
-			ssd1331_put_pixel(inst, &box__, (int16_t)(X1_Tmp), (int16_t)(_Y_), state);
+			ssd1331_draw_pixel(inst, &box__, (int16_t)(X1_Tmp), (int16_t)(_Y_), state);
 	}
 }
 
-void ssd1331_put_v_line(spi_t *inst, box_t *box, int16_t y1, int16_t y2, int16_t x, uint8_t width, bool state) {
+void ssd1331_draw_v_line(spi_t *inst, box_t *box, int16_t y1, int16_t y2, int16_t x, uint8_t width, bool state) {
 	box_t box__;
 	if(box) {
 		box__.x_min = box->x_min;
@@ -353,13 +353,13 @@ void ssd1331_put_v_line(spi_t *inst, box_t *box, int16_t y1, int16_t y2, int16_t
 	for(;Y1_Tmp < Y2_Tmp; Y1_Tmp++) {
 		int16_t _X_ = x - Half_width1;
 		for(; _X_ < x + Half_width2; _X_++)
-			ssd1331_put_pixel(inst, &box__, (int16_t)(_X_), (int16_t)(Y1_Tmp), state);
+			ssd1331_draw_pixel(inst, &box__, (int16_t)(_X_), (int16_t)(Y1_Tmp), state);
 	}
 }
 
 void ssd1331_clear(spi_t *inst, bool state) {
 	
-	ssd1331_put_rectangle(inst, NULL, 0, 0, 96, 64, true, state);
+	ssd1331_draw_rectangle(inst, NULL, 0, 0, 96, 64, true, state);
 }
 
 /*#####################################################*/
@@ -563,13 +563,13 @@ int ssd1331_draw_string(spi_t *inst, box_t *box, char *string, int16_t x, int16_
 						{
 							if (Temp & 0x1)
 							{
-								ssd1331_put_pixel(inst, &box__, 
+								ssd1331_draw_pixel(inst, &box__, 
 									XX + Cursor_X, YY + Cursor_Y, inkColor);
 							}
 							else
 							{
 								if (ulOpaque)
-									ssd1331_put_pixel(inst, &box__,
+									ssd1331_draw_pixel(inst, &box__,
 										XX + Cursor_X, YY + Cursor_Y, foreColor);
 							}
 							Temp = Temp >> 1;

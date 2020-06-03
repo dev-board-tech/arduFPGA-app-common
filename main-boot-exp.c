@@ -26,14 +26,14 @@
 #include "spi.h"
 #include "gui.h"
 #include "kbd.h"
-#include "ssd1306.h"
-#include "25flash.h"
+#include "device/ssd1306.h"
+#include "device/25flash.h"
 #include "mmc_sd_spi.h"
 #include "fat_fs/inc/ff.h"
 
 uint8_t *io_s;
 
-box_t box = {0, 128, 0, 64};
+box_t box = {0, 128, 0, 64};// For ssd1306 128x64 pixels.
 
 
 //int main(void) __attribute__ ((naked)) __attribute__ ((section (".init1")));
@@ -70,7 +70,7 @@ int main(void)
 	//flash_app.spi = &spi;
 	//flash_app.cs_port_out = &SPI_CS_5_PORT;
 	//flash_app.pin_mask = SPI_CS_5_PIN;
-	ssd1306_init(&spi, screen_buf);
+	DISPLAY_FUNC_INIT(&spi, screen_buf);
 	uSD.unitNr = 0;
 	uSD.fatFs = &fatFs;
 	uSD.spi_inst = &spi;

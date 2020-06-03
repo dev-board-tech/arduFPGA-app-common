@@ -1,5 +1,5 @@
 /*
- * Delay library for BOOT-LOADRER of ARDUFPGA soft core design.
+ * Delay library file for arduFPGA designs.
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 

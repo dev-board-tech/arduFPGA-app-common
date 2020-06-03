@@ -1,5 +1,5 @@
 /*
- * Keyboard driver for BOOT-LOADRER of ARDUFPGA soft core design.
+ * Keyboard driver file for arduFPGA designs.
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 

@@ -1,5 +1,5 @@
 /*
- * Utility's for BOOT-LOADRER of ARDUFPGA soft core design.
+ * GUI explorer boot-loader application file for arduFPGA design.
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 
@@ -31,11 +31,12 @@
 #include "mmc_sd_spi.h"
 #include "def.h"
 #include "fat_fs/inc/ff.h"
-#include "25flash.h"
+#include "device/25flash.h"
 #include "kbd.h"
 #include "gui.h"
-#include "ssd1306.h"
+#include "device/ssd1306.h"
 #include "delay.h"
+#include "util-fat.h"
 
 extern DIR dirObject;
 extern FILINFO fInfo;
@@ -48,105 +49,6 @@ extern bool gui_initialized;
 
 const char design_update_err_message[] PROGMEM = "Err reading design update...\r\nThe design need to be loaded\r\n with a programmer";
 
-inline void app_strip_extension(char *ret_path, char *path) {
-	char *path_int = path + strlen(path);
-	do
-	{
-		path_int--;
-	} while (*path_int != '.' && path_int != path);
-	if(path_int != path) {
-		if(ret_path != path) {
-			strncpy(ret_path, path, (path_int - path) + 1);
-			} else {
-			*path_int = '\0';
-		}
-	}
-}
-
-inline char *app_get_path(char *ret_path, char *ptr) {
-// Check if a separator exists.
-	char *start_ptr = strchr(ptr, '/');
-// If a separator does not exists signify that is not a path.
-	if(!start_ptr)
-		return NULL;
-// If a separator is found on other location that the first character, signify that is a relative path.
-	if (start_ptr - ptr != 0) {
-		start_ptr = ptr - 1;
-	}
-// Check for the end separator, every path need to end with a separator.
-	char *end_ptr = strchr(start_ptr + 1, '/');
-// If the end separator is not found, signify that there is no path.
-	if(!end_ptr)
-		return NULL;
-	strncpy(ret_path, start_ptr + 1, end_ptr - start_ptr - 1);
-// Put the end of string.
-	ret_path[end_ptr - start_ptr - 1] = 0;
-	return end_ptr; 
-}
-
-inline void app_get_filename(char *ret_path, char *path) {
-	char *path_int = path + strlen(path);
-// Scan for the first separator from the right to left.
-	do {
-		path_int--;
-	} while (*path_int != '/' && path_int != path);
-// If the path string differ from the scanned one, copy it to the return string.
-	if(path_int != path) {
-		strcpy(ret_path, path_int + 1);
-	}
-}
-
-inline void app_get_extension(char *ret_path, char *path) {
-	char *path_int = path + strlen(path);
-	do
-	{
-		path_int--;
-	} while (*path_int != '.' && path_int != path);
-	if(path_int != path) {
-		strcpy(ret_path, path_int + 1);
-	}
-}
-
-inline void app_change_extension(char *ret_path, char *path, const char *extension) {
-	char *path_int = path + strlen(path);
-// Scan for the first dot from right to left.
-	do {
-		path_int--;
-	} while (*path_int != '.' && path_int != path);
-// If the path string differ from the scanned one, copy it to the return string.
-	if(path_int != path) {
-// If the destination string pointer differs from the source string pointer, copy the string without extension.
-		if(ret_path != path) {
-			strncpy(ret_path, path, (path_int - path) + 1);
-			} else {
-// If the destination string pointer is the same as the source string pointer put the end of string delimiter.
-			*path_int = '\0';
-		}
-// Append the new extension to the destination string.
-		strcat(ret_path, ".");
-		strcat_P(ret_path, extension);
-	}
-}
-
-inline bool app_fallow_path(char *tmp_buf, char *path) {
-// Extract the path to the application.
-	char *ptr = (char*)path;
-// Navigate to the APP directory.
-	bool fallow_ok = true;
-	f_closedir(&dirObject);
-	while ((ptr = app_get_path(tmp_buf, ptr))) {
-		if(f_opendir(&dirObject, tmp_buf) == FR_OK){
-			f_chdir(tmp_buf);
-			} else {
-			if(f_opendir(&dirObject, "/") == FR_OK) {
-				f_chdir("/");
-				fallow_ok = false;
-			}
-			break;
-		}
-	}
-	return fallow_ok;
-}
 // If des.bin and app.bin are found in the root, it will ask for update, these files will be deleted.
 // If des.bin and app.bin are found in the platform directory, will update the design and explorer without asking for update, is considered a change in used platform, these files will not be deleted.
 inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf, bool ask_update) {
@@ -191,7 +93,7 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 			for (cnt = 0; cnt < 0x40; cnt += 0x20) {
 				if(f_read(&filObject, buf, 0x20, &b_read) == FR_OK) {
 					_25flash_read(&flash_des, cnt, buf + 0x20, b_read);
-					//ssd1306_put_rectangle(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 1, 8, true, true);
+					//DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 1, 8, true, true);
 					if(memcmp(buf, buf + 0x20, b_read)) {
 						des_need_update = true;
 						break;
@@ -210,14 +112,14 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 				_24flash_write_status(&flash_des, 0x80);
 				for (cnt = 0; cnt < f_size(&filObject) + 0x1000; cnt += 0x1000) {
 					_25flash_erase(&flash_des, cnt);
-					ssd1306_put_rectangle(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 4, 8, true, true);
+					DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 4, 8, true, true);
 				}
 // Write the updated design to the FLASH.
 				gui_print_status(spi_screen, screen_buf, PSTR("Write design..."), 0);
 				for (cnt = 0; cnt < f_size(&filObject); cnt += 0x40) {
 					if(f_read(&filObject, buf, 0x40, &b_read) == FR_OK) {
 						_25flash_write(&flash_des, cnt, buf, b_read);
-						ssd1306_put_rectangle(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 1, 8, true, true);
+						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 1, 8, true, true);
 					} else {
 						gui_print_status(spi_screen, screen_buf, design_update_err_message, 0);
 						_24flash_write_status(&flash_des, 0xBC);
@@ -244,7 +146,7 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 				for (cnt = FLASH_APP_EXPLORER_START_ADDR; cnt < f_size(&filObject) + FLASH_APP_EXPLORER_START_ADDR; cnt += 0x20) {
 					if(f_read(&filObject, buf, 0x20, &b_read) == FR_OK) {
 						_25flash_read(&flash_des, cnt, buf + 0x20, b_read);
-						ssd1306_put_rectangle(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 1, 8, true, true);
+						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 1, 8, true, true);
 						if(memcmp(buf, buf + 0x20, b_read)) {
 							boot_need_update = true;
 							break;
@@ -260,14 +162,14 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 					_24flash_write_status(&flash_des, 0x80);
 					for (cnt = FLASH_APP_EXPLORER_START_ADDR; cnt < f_size(&filObject) + 0x1000 + FLASH_APP_EXPLORER_START_ADDR; cnt += 0x1000) {
 						_25flash_erase(&flash_des, cnt);
-						ssd1306_put_rectangle(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 16, 8, true, true);
+						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 16, 8, true, true);
 					}
 // Write the updated explorer to the FLASH.
 					gui_print_status(spi_screen, screen_buf, PSTR("Updating explorer..."), 0);
 					for (cnt = FLASH_APP_EXPLORER_START_ADDR; cnt < f_size(&filObject) + FLASH_APP_EXPLORER_START_ADDR; cnt += 0x40) {
 						if(f_read(&filObject, buf, 0x40, &b_read) == FR_OK) {
 							_25flash_write(&flash_des, cnt, buf, b_read);
-							ssd1306_put_rectangle(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 1, 8, true, true);
+							DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 1, 8, true, true);
 						} else {
 							gui_print_status(spi_screen, screen_buf, design_update_err_message, 0);
 							_24flash_write_status(&flash_des, 0xBC);
@@ -331,14 +233,14 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 				break;
 			}
 			cnt += b_read;
-			ssd1306_put_rectangle(spi_screen, NULL, screen_buf, cnt >> f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8), 32, 4, 8, true, true);
+			DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, cnt >> f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8), 32, 4, 8, true, true);
 		} while(cnt < f_size(&filObject));
 		if(!different) {
 			// The application written on the FLASH is the same, load the EEPROM content from uSD if exists.
 			f_close(&filObject);
 			gui_print_status(spi_screen, screen_buf, PSTR("APP is the same."), 128);
 			// Check if a EEPROM file is on the uSD, if it is copy the data into internal emulated EEPROM.
-			app_change_extension(nameBuff, nameBuff, PSTR("eep"));
+			util_fat_change_extension(nameBuff, nameBuff, PSTR("eep"));
 			if(f_open(&filObject, nameBuff, FA_READ) == FR_OK) {
 				for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt+= 0x40) {
 					if(f_read(&filObject, flash_buf, 0x40, &b_read) == FR_OK) {
@@ -363,7 +265,7 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 		_24flash_write_status(&flash_des, 0x80);
 		for(cnt = FLASH_APP_USER_START_ADDR; cnt < FLASH_APP_USER_START_ADDR + FLASH_APP_RAM_OFFSET; cnt += 0x1000) {
 			_25flash_erase(&flash_des, cnt);
-			ssd1306_put_rectangle(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_USER_START_ADDR) >> 10, 32, 4, 8, true, true);
+			DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_USER_START_ADDR) >> 10, 32, 4, 8, true, true);
 		}
 		// Write the selected APP from uSD to the FLASH.
 		f_rewind(&filObject);
@@ -376,11 +278,11 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 			}
 			if(b_read != 0x40) {
 				_25flash_write(&flash_des, FLASH_APP_USER_START_ADDR + cnt, flash_buf, b_read);
-				ssd1306_put_rectangle(spi_screen, NULL, screen_buf, cnt >> 8, 32, 2, 8, true, true);
+				DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, cnt >> 8, 32, 2, 8, true, true);
 				break;
 			}
 			_25flash_write(&flash_des, FLASH_APP_USER_START_ADDR + cnt, flash_buf, 0x40);
-			ssd1306_put_rectangle(spi_screen, NULL, screen_buf, cnt >> 8, 32, 2, 8, true, true);
+			DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, cnt >> 8, 32, 2, 8, true, true);
 		}
 		_24flash_write_status(&flash_des, 0xBC);
 		if(cnt + b_read != f_size(&filObject)) {
@@ -388,7 +290,7 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 		}
 		f_close(&filObject);
 		// Check if a EEPROM file is on the uSD, if it is copy the data into internal emulated EEPROM.
-		app_change_extension(nameBuff, nameBuff, PSTR("eep"));
+		util_fat_change_extension(nameBuff, nameBuff, PSTR("eep"));
 		if(f_open(&filObject, nameBuff, FA_READ) == FR_OK) {
 			for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt+= 0x40) {
 				if(f_read(&filObject, flash_buf, 0x40, &b_read) == FR_OK) {
@@ -401,7 +303,7 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 		}
 		// Save the current loaded APP path, including APP name and extension, into the root directory "current.txt" file.
 		// This way will know at returning from the user APP, where to save the EEPROM and in future releases the RAM content.
-		app_change_extension(nameBuff, nameBuff, PSTR("app"));
+		util_fat_change_extension(nameBuff, nameBuff, PSTR("app"));
 		f_closedir(&dirObject);
 		f_getcwd((TCHAR*)flash_buf, 0x40);
 		strcat((char*)flash_buf, "/");
@@ -435,7 +337,7 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 	} else if(des_updated){
 		// Save the current loaded APP path, including APP name and extension, into the root directory "current.txt" file.
 		// This way will know at returning from the user APP, where to save the EEPROM and in future releases the RAM content.
-		app_change_extension(nameBuff, nameBuff, PSTR("app"));
+		util_fat_change_extension(nameBuff, nameBuff, PSTR("app"));
 		f_closedir(&dirObject);
 		f_getcwd((TCHAR*)flash_buf, 0x40);
 		strcat((char*)flash_buf, "/");
@@ -493,9 +395,9 @@ inline void app_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_
 					f_close(&filObject);
 					char tmp_buf[16];
 					char filename[27];
-					bool fallow_ok = app_fallow_path(tmp_buf, (char *)buf);
+					bool fallow_ok = util_fat_fallow_path(&dirObject, tmp_buf, (char *)buf);
 					// Extract the name with extension of the application.
-					app_get_filename(filename, (char *)buf);
+					util_fat_get_filename(filename, (char *)buf);
 					/*****************************************/
 					// Check if EEPROM was edited.
 					/*****************************************/
@@ -504,7 +406,7 @@ inline void app_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_
 						BOOT_STAT &= ~BOOT_STAT_EEP_EDITED;
 						// Check if the path was successfully fallow.
 						if(fallow_ok) {
-							app_change_extension(filename, filename, PSTR("eep"));
+							util_fat_change_extension(filename, filename, PSTR("eep"));
 							bool eep_different = false;
 							// Try to open the EEPROM file.
 							if(f_open(&filObject, filename, FA_READ) == FR_OK) {

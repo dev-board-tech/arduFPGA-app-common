@@ -8,7 +8,7 @@
 //#include <sys/cdefs.h>
 #include "../inc/ff_util.h"
 //#include "../inc/ff.h"			/* FatFs configurations and declarations */
-#include "../hex_string.h"
+#include "util.h"
 
 unsigned long checksum_send;
 
@@ -122,13 +122,13 @@ int ff_util_appendhexs (
 	char tmp_str_buff[65];
 	for(; cnt + 32 <= buff_len; cnt += 32)
 	{
-		GetHexBuff(tmp_str_buff, (unsigned char *)buff + cnt, 32);
+		util_get_hex_buf(tmp_str_buff, (unsigned char *)buff + cnt, 32);
 		if(ff_util_puts(tmp_str_buff, fp) != 64)
 			return cnt;
 	}
 	if((signed int)cnt < (signed int)buff_len)
 	{
-		GetHexBuff(tmp_str_buff, (unsigned char *)buff + cnt, buff_len - cnt);
+		util_get_hex_buf(tmp_str_buff, (unsigned char *)buff + cnt, buff_len - cnt);
 		if(ff_util_puts(tmp_str_buff, fp) != (buff_len - cnt) * 2)
 			return cnt;
 	}

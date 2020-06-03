@@ -1,5 +1,5 @@
 /*
- * GUI & Explorer for BOOT-LOADRER of ARDUFPGA soft core design.
+ * GUI & Explorer file for arduFPGA designs.
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 
@@ -29,7 +29,7 @@
 #include "fat_fs/inc/ff.h"
 #include "ffconf.h"
 #include "kbd.h"
-#include GUI_UTIL_FILE_INCLUDE
+#include GUI_APP_FILE_INCLUDE
 
 
 uint8_t disp_up_limit = GUI_UPPER_LIMIT_ROW;
@@ -63,8 +63,8 @@ void gui_idle(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 // Check if the FS is mounted, if it is, open the root directory.
 	if(uSD->fs_mounted != fs_mounted && uSD->fs_mounted) {
 		fs_mounted = true;
-#ifdef GUI_ACT_AT_uSD_INSERT
-		GUI_ACT_AT_uSD_INSERT(uSD, spi_screen, screen_buf);
+#ifdef GUI_ACT_FUNC_AT_uSD_INSERT
+		GUI_ACT_FUNC_AT_uSD_INSERT(uSD, spi_screen, screen_buf);
 #endif
 	} else {
 		if(uSD->fs_mounted != fs_mounted && ~uSD->fs_mounted) {
@@ -175,15 +175,15 @@ void gui_paint(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 						}
 // Concatenate the file/directory name.
 						strcat(tmpNameBuff, fInfo.fname);
-						ssd1306_put_rectangle(spi_screen, NULL, screen_buf, 0, ((menu_scan - menu_pos) + disp_up_limit) << 3, ssd1306_get_x(), 8, true, true);
-						ssd1306_draw_string(spi_screen, NULL, screen_buf, tmpNameBuff, 0, ((menu_scan - menu_pos) + disp_up_limit) << 3, false, false, 1, 0);
+						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, 0, ((menu_scan - menu_pos) + disp_up_limit) << 3, ssd1306_get_x(), 8, true, true);
+						DISPLAY_FUNC_DRAW_STRING(spi_screen, NULL, screen_buf, tmpNameBuff, 0, ((menu_scan - menu_pos) + disp_up_limit) << 3, false, false, 1, 0);
 					}
 					menu_scan++;
 				}
 			}
 // If there are less that eight lines to print on the display, fill the rest of the display with the background color.
 			for (uint16_t tmp_cnt = ((menu_scan - menu_pos) + disp_up_limit); tmp_cnt < (disp_dn_limit + 1); tmp_cnt++) {
-				ssd1306_put_rectangle(spi_screen, NULL, screen_buf, 0, tmp_cnt << 3, ssd1306_get_x(), 8, true, true);
+				DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, 0, tmp_cnt << 3, ssd1306_get_x(), 8, true, true);
 			}
 		}
 		else {

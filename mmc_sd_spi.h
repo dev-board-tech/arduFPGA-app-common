@@ -1,5 +1,5 @@
 /*
- * MMC/SD driver for BOOT-LOADRER of ARDUFPGA soft core design.
+ * MMC/SD driver file for arduFPGA designs.
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 

@@ -26,7 +26,7 @@
 #include <avr/eeprom.h>
 #include "def.h"
 #include "spi.h"
-#include "25flash.h"
+#include "device/25flash.h"
 #include "delay.h"
 
 volatile void *sp_value __attribute__ ((section (".data"))) = 0;

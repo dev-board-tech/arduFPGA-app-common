@@ -1,5 +1,5 @@
 /*
- * GUI & Explorer for BOOT-LOADRER of ARDUFPGA soft core design.
+ * GUI & Explorer file for arduFPGA designs.
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 
@@ -24,14 +24,14 @@
 
 #include <avr/pgmspace.h>
 #include "mmc_sd_spi.h"
-#include "ssd1306.h"
+#include "device/ssd1306.h"
 
 inline void gui_print_status(spi_t *spi_screen, uint8_t *screen_buf, const char *text, uint8_t bar_len) {
 	char buf[32];
 	strcpy_P(buf, text);
 	ssd1306_clear(spi_screen, screen_buf, 0);
 	if(bar_len) {
-		ssd1306_put_rectangle(spi_screen, NULL, screen_buf, 0, 32, bar_len, 8, true, true);
+		ssd1306_draw_rectangle(spi_screen, NULL, screen_buf, 0, 32, bar_len, 8, true, true);
 	}
 	ssd1306_draw_string(spi_screen, NULL, screen_buf, buf, 0, 8, false, false, 0, 1);
 }

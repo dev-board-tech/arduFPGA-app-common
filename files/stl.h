@@ -1,5 +1,5 @@
 /*
- * 25 series of SPI FLASH memory driver for BOOT-LOADRER of ARDUFPGA soft core design.
+ * STL file decoder library file for arduFPGA design.
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 
@@ -19,22 +19,51 @@
  */
 
 
-#ifndef __25FLASH_H__
-#define __25FLASH_H__
+#ifndef STL_H_
+#define STL_H_
 
-#include <stdint.h>
-#include "spi.h"
+#include "gfx/3d.h"
 
-typedef struct _25flash_s 
+typedef struct
 {
-	spi_t *spi;
-	volatile uint8_t *cs_port_out;
-	uint8_t pin_mask;
-}_25flash_t;
+	unsigned char Header[80];
+	unsigned long TriangleNr;
+}stl_header;
 
-void _24flash_write_status(_25flash_t *dev, uint8_t status);
-void _25flash_write(_25flash_t *dev, uint32_t addr, uint8_t *buff, uint16_t size);
-void _25flash_read(_25flash_t *dev, uint32_t addr, uint8_t *buff, uint16_t size);
-void _25flash_erase(_25flash_t *dev, uint32_t addr);
+typedef struct
+{
+	struct
+	{
+		float x;
+		float y;
+		float z;
+	}NormalVector;
+	struct
+	{
+		float x;
+		float y;
+		float z;
+	}Vertex1;
+	struct
+	{
+		float x;
+		float y;
+		float z;
+	}Vertex2;
+	struct
+	{
+		float x;
+		float y;
+		float z;
+	}Vertex3;
+	unsigned short Attribute;
+}stl_solid_t;
 
-#endif /* 25FLASH_H_ */
+void stl_get_triangle(_3d_points *triangle_bounds, unsigned char *file, unsigned long triangle_nr);
+unsigned long stl_get_nr_of_triangles(unsigned char *file);
+
+#ifdef USE_VISUAL_STUDIO
+#include "stl.cpp"
+#endif
+
+#endif /* STL_H_ */

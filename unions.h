@@ -1,5 +1,5 @@
 /*
- * Unions utility for BOOT-LOADRER of ARDUFPGA soft core design.
+ * Unions utility file for arduFPGA designs
  * 
  * Copyright (C) 2016  Iulian Gheorghiu (morgoth@devboard.tech)
  * 
@@ -20,45 +20,42 @@
 
 #ifndef __UNIONS__
 #define __UNIONS__
-//convert32to8 ByteToWrite_;
-//ByteToWrite_.i32 = 32857632847;
-//PORTA = ByteToWrite_.Byte0;
-//PORTB = ByteToWrite_.Byte1;
-//PORTC = ByteToWrite_.Byte2;
-//PORTD = ByteToWrite_.Byte3;
-
-
-//convert8to32 LoongToRead_;
-//LoongToRead_.Byte0 = RamDisk_DataTable[FileAddress];
-//LoongToRead_.Byte1 = RamDisk_DataTable[FileAddress + 1];
-//LoongToRead_.Byte2 = RamDisk_DataTable[FileAddress + 2];
-//LoongToRead_.Byte3 = RamDisk_DataTable[FileAddress + 3];
-//return LoongToRead_.LoongReturn;
+//Example of usage.
+/*
+convert32to8 ByteToWrite_;
+ByteToWrite_.i32 = 32857632847;
+PORTA = ByteToWrite_.Byte0;
+PORTB = ByteToWrite_.Byte1;
+PORTC = ByteToWrite_.Byte2;
+PORTD = ByteToWrite_.Byte3;
+*/
+/*
+convert8to32 LoongToRead_;
+LoongToRead_.Byte0 = RamDisk_DataTable[FileAddress];
+LoongToRead_.Byte1 = RamDisk_DataTable[FileAddress + 1];
+LoongToRead_.Byte2 = RamDisk_DataTable[FileAddress + 2];
+LoongToRead_.Byte3 = RamDisk_DataTable[FileAddress + 3];
+return LoongToRead_.LoongReturn;
+*/
 //###########################################################################
-typedef union 
-{
+typedef union {
 unsigned short i16;
-	struct 
-	{
+	struct {
 		unsigned char Byte0;
 		unsigned char Byte1;
 	};
 } convert16to8;
 //###########################################################################
-typedef union 
-{
-	struct 
-	{
+typedef union {
+	struct {
 		unsigned char Byte0;
 		unsigned char Byte1;
 	};unsigned short ShortReturn;
 }convert8to16;
 //###########################################################################
-typedef union 
-{
+typedef union {
 unsigned long i32;
-	struct 
-	{
+	struct {
 		unsigned char Byte0;
 		unsigned char Byte1;
 		unsigned char Byte2;
@@ -66,10 +63,8 @@ unsigned long i32;
 	};
 }convert32to8;
 //###########################################################################
-typedef union 
-{
-	struct 
-	{
+typedef union {
+	struct {
 		unsigned char Byte0;
 		unsigned char Byte1;
 		unsigned char Byte2;
@@ -77,11 +72,9 @@ typedef union
 	};unsigned long LongReturn;
 }convert8to32;
 //###########################################################################
-typedef union 
-{
+typedef union {
 double i48;
-	struct 
-	{
+	struct {
 		unsigned char Byte0;
 		unsigned char Byte1;
 		unsigned char Byte2;
@@ -91,10 +84,8 @@ double i48;
 	};
 }convert48to8;
 //###########################################################################
-typedef union 
-{
-	struct 
-	{
+typedef union {
+	struct {
 		unsigned char Byte0;
 		unsigned char Byte1;
 		unsigned char Byte2;
@@ -104,11 +95,9 @@ typedef union
 	};double Return48;
 }convert8to48;
 //###########################################################################
-typedef union 
-{
+typedef union {
 double i64;
-	struct 
-	{
+	struct {
 		unsigned char Byte0;
 		unsigned char Byte1;
 		unsigned char Byte2;
@@ -120,10 +109,8 @@ double i64;
 	};
 }convert64to8;
 //###########################################################################
-typedef union 
-{
-	struct 
-	{
+typedef union {
+	struct {
 		unsigned char Byte0;
 		unsigned char Byte1;
 		unsigned char Byte2;

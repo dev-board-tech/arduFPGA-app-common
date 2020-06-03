@@ -1,14 +1,28 @@
 /*
- * util.h
- *
- * Created: 24.05.2020 13:23:31
- *  Author: MorgothCreator
- */ 
+ * Utility file for arduFPGA designs.
+ * 
+ * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 
 
 #ifndef UTIL_H_
 #define UTIL_H_
 
+#include <ctype.h>
 #include <stdint.h>
 
 void util_char_to_hex(char *ptr, uint8_t c) {
@@ -32,8 +46,147 @@ void util_long_to_hex(char *ptr, uint32_t c) {
 	ptr[8] = 0;
 }
 
+void util_get_hex_buf(char *hex_str, unsigned char *data, unsigned int data_len)
+{
+	unsigned int cnt = 0;
+	char tmp_str[2];
+	for(; cnt < data_len; cnt++)
+	{
+		util_char_to_hex(tmp_str, data[cnt]);
+		hex_str[cnt * 2] = tmp_str[0];
+		hex_str[(cnt * 2) + 1] = tmp_str[1];
+	}
+	hex_str[cnt * 2] = 0;
+}
 
+bool util_get_bin_from_hex_char(unsigned char *dest, char src)
+{
+	int tmp = tolower((int)src);
+	if((tmp < '0' || tmp > '9') && (tmp < 'a' || tmp > 'f'))
+		return false;
+	if(tmp <= '9')
+		*dest = (tmp - '0') & 0x0F;
+	else
+	{
+		*dest = ((tmp - 'a') + 10) & 0x0F;
+	}
+	return true;
+}
 
+unsigned int util_get_bin_from_hex_buf(unsigned char *bin_buff, char *data, unsigned int dest_buff_len)
+{
+	unsigned int cnt = 0;
+	while(*data != 0 && dest_buff_len != 0)
+	{
+		unsigned char tmp0 = 0;
+		unsigned char tmp1 = 0;
+		if(!util_get_bin_from_hex_char(&tmp1, *data++))
+			return 0;
+		if(!util_get_bin_from_hex_char(&tmp0, *data++))
+			return 0;
+		bin_buff[cnt++] = (tmp1 << 4) + tmp0;
+		dest_buff_len--;
+	}
+	return cnt;
+}
+/*
+ * This function convert a Value between MinValue and MaxValue to a fit into a value from 0 to MaxPercentageValue.
+ */
+int32_t util_int_to_percent(int32_t maxPercentageValue, int32_t minValue, int32_t maxValue, int32_t value)
+{
+	int32_t ReturnedValue = 0;
+	if(value > maxValue)
+		value = maxValue;
+	else if(value < minValue)
+		value = minValue;
+	if (maxValue < 65536)
+		ReturnedValue = ((value - minValue) * 0x10000) / (((maxValue - minValue) * 0x10000) / maxPercentageValue);
+	else
+		ReturnedValue = (value - minValue) / ((maxValue - minValue) / maxPercentageValue);
+	if(ReturnedValue > maxPercentageValue)
+		ReturnedValue = maxPercentageValue;
+	else if(ReturnedValue < 0)
+		ReturnedValue = 0;
+	return ReturnedValue;
+}
 
+/*
+ * This function convert a Value between MinValue and MaxValue to a fit into a value from 0 to MaxPercentageValue.
+ */
+uint32_t util_uint_to_percent(uint32_t maxPercentageValue, uint32_t minValue, uint32_t maxValue, uint32_t value)
+{
+	uint32_t ReturnedValue = 0;
+	if (maxValue < 65536)
+		ReturnedValue = ((value - minValue) * 0x10000) / (((maxValue - minValue) * 0x10000) / maxPercentageValue);
+	else
+		ReturnedValue = (value - minValue) / ((maxValue-minValue) / maxPercentageValue);
+	if(ReturnedValue > maxPercentageValue)
+		ReturnedValue = maxPercentageValue;
+	else if(ReturnedValue < 0)
+		ReturnedValue = 0;
+	return ReturnedValue;
+}
+
+/*
+ * This function convert a Value between MinValue and MaxValue to a fit into a value from 0 to MaxPercentageValue.
+ */
+double util_double_to_percent(double maxPercentageValue, double minValue, double maxValue, double value)
+{
+	double ReturnedValue = 0;
+	ReturnedValue = (value- minValue) / ((maxValue-minValue) / maxPercentageValue);
+	if(ReturnedValue > maxPercentageValue)
+		ReturnedValue = maxPercentageValue;
+	else if(ReturnedValue < 0)
+		ReturnedValue = 0;
+	return ReturnedValue;
+}
+
+typedef struct ToPercentageWithDecimals_s
+{
+	int32_t Value;
+	int8_t Decimal;
+}ToPercentageWithDecimals_t;
+
+/*
+ * This function convert a Value between MinValue and MaxValue to a fit into a value from 0 to MaxPercentageValue with decimals.
+ * At this moment does not return decimals :)
+ */
+ToPercentageWithDecimals_t util_int_to_percent_decimal(int32_t maxPercentageValue, int32_t minValue, int32_t maxValue, int32_t value)
+{
+	ToPercentageWithDecimals_t Return;
+	Return.Decimal = 0;
+	if (maxValue < 65536) { // Increase the precision of the result.
+		Return.Value = (value * 0x10000) / (((maxValue - minValue) * 0x10000) / maxPercentageValue);
+	} else {
+		Return.Value = value / ((maxValue-minValue) / maxPercentageValue);
+	}
+	return Return;
+}
+
+/*
+ * This function convert a Value between 0 and MaxPercentageValue to a value between MinValue and MaxValue.
+ */
+int32_t util_percent_to_int(int32_t minValue, int32_t maxValue, int32_t maxPercentageValue, int32_t value)
+{
+	int32_t result = (signed long long)((value * (maxValue - minValue)) / maxPercentageValue) + minValue;
+	if(result > maxValue)
+		result = maxValue;
+	else if(result < minValue)
+		result = minValue;
+	return result;
+}
+
+/*
+ * This function convert a Value between 0 and MaxPercentageValue to a value between MinValue and MaxValue.
+ */
+double util_percent_to_double(double minValue, double maxValue, double maxPercentageValue, double value)
+{
+	double result = ((value * (maxValue - minValue)) / maxPercentageValue) + minValue;
+	if(result > maxValue)
+		result = maxValue;
+	else if(result < minValue)
+		result = minValue;
+	return result;
+}
 
 #endif /* UTIL_H_ */

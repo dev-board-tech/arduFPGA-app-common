@@ -1,5 +1,5 @@
 /*
- * UART driver for BOOT-LOADRER of ARDUFPGA soft core design.
+ * UART driver file for arduFPGA design.
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 

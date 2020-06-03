@@ -1,7 +1,7 @@
 /*
- * HEX string utility for BOOT-LOADRER of ARDUFPGA soft core design.
+ * 25 series of SPI FLASH memory driver file for arduFPGA designs.
  * 
- * Copyright (C) 2016  Iulian Gheorghiu (morgoth@devboard.tech)
+ * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,13 +18,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef LIB_LIB_UTIL_HEX_STRING_H_
-#define LIB_LIB_UTIL_HEX_STRING_H_
 
-void GetHexChar(char *hex_str, unsigned char data);
-void GetHexBuff(char *hex_str, unsigned char *data, unsigned int data_len);
-bool GetBinFromHexChar(unsigned char *dest, char src);
-unsigned int GetBinFromHexBuff(unsigned char *bin_buff, char *data, unsigned int dest_buff_len);
+#ifndef __25FLASH_H__
+#define __25FLASH_H__
 
+#include <stdint.h>
+#include "../spi.h"
 
-#endif /* LIB_LIB_UTIL_HEX_STRING_H_ */
+typedef struct _25flash_s 
+{
+	spi_t *spi;
+	volatile uint8_t *cs_port_out;
+	uint8_t pin_mask;
+}_25flash_t;
+
+void _24flash_write_status(_25flash_t *dev, uint8_t status);
+void _25flash_write(_25flash_t *dev, uint32_t addr, uint8_t *buff, uint16_t size);
+void _25flash_read(_25flash_t *dev, uint32_t addr, uint8_t *buff, uint16_t size);
+void _25flash_erase(_25flash_t *dev, uint32_t addr);
+
+#endif /* 25FLASH_H_ */
