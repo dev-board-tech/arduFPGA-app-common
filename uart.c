@@ -20,7 +20,11 @@
 
 #include <stdint.h>
 #include <avr/io.h>
+#if defined (__AVR_XMEGA__) || defined (__AVR_MEGA__)
+#include <avr/pgmspace.h>
+#endif
 #include "uart.h"
+#include "unions.h"
 
 void uart_init(uint32_t baud) {
 	unsigned int ubrr = (F_CPU / (baud * 8)) -1;
@@ -63,11 +67,43 @@ void uart_put_c(int8_t c) {
 #endif
 }
 
+#if defined (__AVR_XMEGA__) || defined (__AVR_MEGA__)
+void uart_put_s_P(const char *s) {
+	char c;
+	while ((c = pgm_read_byte(s++))) {
+		uart_put_c(c);
+	}
+}
+#endif
+
 void uart_put_s(char *s) {
 	char c;
 	while ((c = *s++)) {
 		uart_put_c(c);
 	}
+}
+
+void uart_print_bin_char(uint8_t c) {
+	for (uint8_t cnt = 0; cnt < 8; cnt++) {
+		uart_put_c(c & 0x80 ? '1' : '0');
+		c = c<< 1;
+	}
+}
+
+void uart_print_bin_short(uint16_t x) {
+	convert16to8 uni;
+	uni.i16 = x;
+	uart_print_bin_char(uni.Byte1);
+	uart_print_bin_char(uni.Byte0);
+}
+
+void uart_print_bin_long(uint32_t x) {
+	convert32to8 uni;
+	uni.i32 = x;
+	uart_print_bin_char(uni.Byte3);
+	uart_print_bin_char(uni.Byte2);
+	uart_print_bin_char(uni.Byte1);
+	uart_print_bin_char(uni.Byte0);
 }
 
 void uart_print_hex_char(uint8_t c) {
