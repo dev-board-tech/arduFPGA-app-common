@@ -89,6 +89,10 @@ unsigned int util_get_bin_from_hex_buf(unsigned char *bin_buff, char *data, unsi
 	}
 	return cnt;
 }
+
+uint8_t util_dec_to_uchar(char *buf) {
+	
+}
 /*
  * This function convert a Value between MinValue and MaxValue to a fit into a value from 0 to MaxPercentageValue.
  */

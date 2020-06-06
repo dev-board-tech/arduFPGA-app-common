@@ -22,19 +22,25 @@
 #include <avr/pgmspace.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 #include <avr/io.h>
 #include <avr/eeprom.h>
+#include <stdlib.h>
 #include "def.h"
 #include "spi.h"
 #include "device/25flash.h"
-#include "delay.h"
+#include "uart.h"
+#include "unions.h"
 
-volatile void *sp_value __attribute__ ((section (".data"))) = 0;
+void (*service_Ptr)(void) = NULL;
+volatile void *sp_value = 0;
 volatile int16_t cnt_int_key_k;
 volatile uint8_t pushed;
 volatile bool after_power_up = true;
 uint8_t flash_buf[256];
 volatile uint8_t led_color = 0;
+volatile uint8_t debug_char_in_cnt = 0;
+volatile int8_t debug_char_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 spi_t spi;
 uint8_t screen_buf[1];
@@ -229,6 +235,7 @@ void init() {
 	"rjmp _init \n\t"
 	"rjmp _int \n\t"
 	"rjmp main \n\t"
+	"rjmp _set_serv_addr \n\t"
 	"_init: \n\t"
 	"cli \n\t"
 	"eor	r1, r1 \n\t"
@@ -298,13 +305,75 @@ int main(void)
 	asm("jmp 0x0000");
 }
 
+void _set_serv_addr(uint16_t service_addr) __attribute__ ((naked));
+void _set_serv_addr(uint16_t service_addr) {
+	asm("push r25");
+	uint8_t tmp = _SFR_IO8(0x3F);
+	cli();
+	service_Ptr = (void *)service_addr;
+	_SFR_IO8(0x3F) = tmp;
+	asm("pop r25");
+	asm("ret");
+}
+
+void char_received(int8_t c) {
+	if(c == 0x08 && debug_char_buf != 0) {
+		debug_char_in_cnt--;
+		uart_put_c(0x08);
+		} else {
+		if(debug_char_in_cnt < sizeof(debug_char_buf)) {
+			debug_char_buf[debug_char_in_cnt] = c;
+			uart_put_c(debug_char_buf[debug_char_in_cnt]);
+			debug_char_in_cnt++;
+			}
+		if(c == 0x0a || c == 0x0d) {
+			if(debug_char_in_cnt >= 5 && !strcmp((char *)debug_char_buf, "DUMP")) {
+				uint8_t *ptr = (uint8_t *)uni_8_to_16(atoi((char *)debug_char_buf + 5), 0);
+				uint16_t cnt = 0;
+				for (; cnt < 256; cnt++) {
+#ifndef DEBUG_BINARY
+					uart_put_s("ADDR: 0x");
+					uart_print_hex_short((uint16_t)ptr + cnt);
+					uart_put_s("  HEX VAL: 0x");
+					uart_print_hex_char(ptr[cnt]);
+					uart_put_s("  BIN VAL: 0b");
+					uart_print_bin_char(ptr[cnt]);
+					uart_put_s("  ASCII VAL: ");
+					uart_put_c(ptr[cnt]);
+					uart_put_s("\n\r");
+#else
+					uart_put_c(ptr[cnt]);
+#endif
+				}
+#ifdef DEBUG_BINARY
+				uart_put_c('\r');
+#endif
+			} else {
+				uart_put_s("ERR FORMAT\n\r");
+			}
+			debug_char_in_cnt = 0;
+		}
+	}
+}
+
 void _int(void) __attribute__ ((signal,__INTR_ATTRS));
 void _int(void) {
+// If a service function is registered, call it.
+	if(service_Ptr) {
+		service_Ptr();
+	}
+	if(BOOT_STAT & BOOT_STAT_DEBUG_EN) {
+		int16_t c;
+		c = uart_get_c_nb();
+		if(c != -1) {
+			char_received((uint8_t) c);
+		}
+	}
 	if(KBD_IN & KBD_INT_PIN) {
 		cnt_int_key_k = 0;
 		pushed &= ~KBD_INT_PIN;
 	} else {
-		if(cnt_int_key_k != 20) {
+		if(cnt_int_key_k != 2000) {
 			cnt_int_key_k++;
 		} else {
 /*

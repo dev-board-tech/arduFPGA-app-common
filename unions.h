@@ -122,5 +122,33 @@ typedef union {
 	};double Return64;
 }convert8to64;
 //###########################################################################
+inline uint16_t uni_8_to_16(uint8_t b1, uint8_t b0) {
+	convert8to16 uni;
+	uni.Byte0 = b0;
+	uni.Byte1 = b1;
+	return uni.ShortReturn;
+}
+
+inline uint32_t uni_8_to_32(uint8_t b3, uint8_t b2, uint8_t b1, uint8_t b0) {
+	convert8to32 uni;
+	uni.Byte0 = b0;
+	uni.Byte1 = b1;
+	uni.Byte2 = b2;
+	uni.Byte3 = b3;
+	return uni.LongReturn;
+}
+
+inline uint64_t uni_8_to_64(uint8_t b7, uint8_t b6, uint8_t b5, uint8_t b4, uint8_t b3, uint8_t b2, uint8_t b1, uint8_t b0) {
+	convert8to64 uni;
+	uni.Byte0 = b0;
+	uni.Byte1 = b1;
+	uni.Byte2 = b2;
+	uni.Byte3 = b3;
+	uni.Byte4 = b4;
+	uni.Byte5 = b5;
+	uni.Byte6 = b6;
+	uni.Byte7 = b7;
+	return uni.Return64;
+}
 //###########################################################################
 #endif
