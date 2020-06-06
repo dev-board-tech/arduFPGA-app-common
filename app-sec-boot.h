@@ -58,11 +58,11 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 		gui_draw_string(spi_screen, screen_buf, PSTR("Check for update..."), 0, 8);
 		delay_ms(1000);
 	}
-	FRESULT f2 = f_open(&filObject, "exp.bin", FA_READ);
+	FRESULT f2 = f_open(&filObject, "des.bin", FA_READ);
 	if(f2 == FR_OK) {
 		f_close(&filObject);
 	}
-	FRESULT f1 = f_open(&filObject, "des.bin", FA_READ);
+	FRESULT f1 = f_open(&filObject, "exp.bin", FA_READ);
 	if(f1 == FR_OK && f2 == FR_OK) {
 		// Design update has been found.
 		// If the design update has been found, there is mandatory to be an application update file.
@@ -85,41 +85,39 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 			uint8_t buf[64];
 			uint32_t cnt = 0;
 /*****************************************/
-/* Verify the design if is the same.*/
-/* We do not need to check more than 64 bytes at the beginning of the image,
-    because the image include the date, hour and minute when was compiled. */
+// Update the bootloader/explorer FLASH.
 /*****************************************/
-			//gui_print_status(spi_screen, screen_buf, PSTR("Verify design..."), 0);
-			for (cnt = 0; cnt < 0x40; cnt += 0x20) {
+/*****************************************/
+// Verify the bootloader/explorer FLASH if is the same.
+/*****************************************/
+			gui_print_status(spi_screen, screen_buf, PSTR("Verify explorer..."), 0);
+			for (cnt = FLASH_APP_EXPLORER_START_ADDR; cnt < f_size(&filObject) + FLASH_APP_EXPLORER_START_ADDR; cnt += 0x20) {
 				if(f_read(&filObject, buf, 0x20, &b_read) == FR_OK) {
 					_25flash_read(&flash_des, cnt, buf + 0x20, b_read);
-					//DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 1, 8, true, true);
+					DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 1, 8, true, true);
 					if(memcmp(buf, buf + 0x20, b_read)) {
-						des_need_update = true;
+						boot_need_update = true;
 						break;
 					}
 				}
 			}
 /*****************************************/
-// !Verify the design if is the same.
+// !Verify the bootloader/explorer FLASH if is the same.
 /*****************************************/
-/*****************************************/
-// Update the design FLASH.
-/*****************************************/
-			if(des_need_update) {
+			if(boot_need_update) {
 				f_rewind(&filObject);
-				gui_print_status(spi_screen, screen_buf, PSTR("Erasing design..."), 0);
+				gui_print_status(spi_screen, screen_buf, PSTR("Erasing explorer..."), 0);
 				_24flash_write_status(&flash_des, 0x80);
-				for (cnt = 0; cnt < f_size(&filObject) + 0x1000; cnt += 0x1000) {
+				for (cnt = FLASH_APP_EXPLORER_START_ADDR; cnt < f_size(&filObject) + 0x1000 + FLASH_APP_EXPLORER_START_ADDR; cnt += 0x1000) {
 					_25flash_erase(&flash_des, cnt);
-					DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 4, 8, true, true);
+					DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 16, 8, true, true);
 				}
-// Write the updated design to the FLASH.
-				gui_print_status(spi_screen, screen_buf, PSTR("Write design..."), 0);
-				for (cnt = 0; cnt < f_size(&filObject); cnt += 0x40) {
+// Write the updated explorer to the FLASH.
+				gui_print_status(spi_screen, screen_buf, PSTR("Updating explorer..."), 0);
+				for (cnt = FLASH_APP_EXPLORER_START_ADDR; cnt < f_size(&filObject) + FLASH_APP_EXPLORER_START_ADDR; cnt += 0x40) {
 					if(f_read(&filObject, buf, 0x40, &b_read) == FR_OK) {
 						_25flash_write(&flash_des, cnt, buf, b_read);
-						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 1, 8, true, true);
+						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 1, 8, true, true);
 					} else {
 						gui_print_status(spi_screen, screen_buf, design_update_err_message, 0);
 						_24flash_write_status(&flash_des, 0xBC);
@@ -129,47 +127,49 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 				_24flash_write_status(&flash_des, 0xBC);
 				f_close(&filObject);
 				if(ask_update) {
-					f_unlink("des.bin");
+					f_unlink("exp.bin");
 				}
 			}
 /*****************************************/
-// !Update the design FLASH.
+// !Update the bootloader/explorer FLASH.
 /*****************************************/
+			if(f_open(&filObject, "des.bin", FA_READ) == FR_OK) {
 /*****************************************/
-// Update the bootloader/explorer FLASH.
+/* Verify the design if is the same.*/
+/* We do not need to check more than 64 bytes at the beginning of the image,
+    because the image include the date, hour and minute when was compiled. */
 /*****************************************/
-			if(f_open(&filObject, "exp.bin", FA_READ) == FR_OK) {
-/*****************************************/
-// Verify the bootloader/explorer FLASH if is the same.
-/*****************************************/
-				gui_print_status(spi_screen, screen_buf, PSTR("Verify explorer..."), 0);
-				for (cnt = FLASH_APP_EXPLORER_START_ADDR; cnt < f_size(&filObject) + FLASH_APP_EXPLORER_START_ADDR; cnt += 0x20) {
+				//gui_print_status(spi_screen, screen_buf, PSTR("Verify design..."), 0);
+				for (cnt = 0; cnt < 0x40; cnt += 0x20) {
 					if(f_read(&filObject, buf, 0x20, &b_read) == FR_OK) {
 						_25flash_read(&flash_des, cnt, buf + 0x20, b_read);
-						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 1, 8, true, true);
+						//DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 1, 8, true, true);
 						if(memcmp(buf, buf + 0x20, b_read)) {
-							boot_need_update = true;
+							des_need_update = true;
 							break;
 						}
 					}
 				}
 /*****************************************/
-// !Verify the bootloader/explorer FLASH if is the same.
+// !Verify the design if is the same.
 /*****************************************/
-				if(boot_need_update) {
+/*****************************************/
+// Update the design FLASH.
+/*****************************************/
+				if(des_need_update) {
 					f_rewind(&filObject);
-					gui_print_status(spi_screen, screen_buf, PSTR("Erasing explorer..."), 0);
+					gui_print_status(spi_screen, screen_buf, PSTR("Erasing design..."), 0);
 					_24flash_write_status(&flash_des, 0x80);
-					for (cnt = FLASH_APP_EXPLORER_START_ADDR; cnt < f_size(&filObject) + 0x1000 + FLASH_APP_EXPLORER_START_ADDR; cnt += 0x1000) {
+					for (cnt = 0; cnt < f_size(&filObject) + 0x1000; cnt += 0x1000) {
 						_25flash_erase(&flash_des, cnt);
-						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 16, 8, true, true);
+						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 4, 8, true, true);
 					}
-// Write the updated explorer to the FLASH.
-					gui_print_status(spi_screen, screen_buf, PSTR("Updating explorer..."), 0);
-					for (cnt = FLASH_APP_EXPLORER_START_ADDR; cnt < f_size(&filObject) + FLASH_APP_EXPLORER_START_ADDR; cnt += 0x40) {
+	// Write the updated design to the FLASH.
+					gui_print_status(spi_screen, screen_buf, PSTR("Write design..."), 0);
+					for (cnt = 0; cnt < f_size(&filObject); cnt += 0x40) {
 						if(f_read(&filObject, buf, 0x40, &b_read) == FR_OK) {
 							_25flash_write(&flash_des, cnt, buf, b_read);
-							DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_EXPLORER_START_ADDR) >> (f_size(&filObject) > 0x10000 ? 10 : (f_size(&filObject) > 0x8000 ? 9 : 8)), 32, 1, 8, true, true);
+							DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt) >> 10, 32, 1, 8, true, true);
 						} else {
 							gui_print_status(spi_screen, screen_buf, design_update_err_message, 0);
 							_24flash_write_status(&flash_des, 0xBC);
@@ -179,22 +179,22 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 					_24flash_write_status(&flash_des, 0xBC);
 					f_close(&filObject);
 					if(ask_update) {
-						f_unlink("exp.bin");
+						f_unlink("des.bin");
 					}
 				}
 			}
 /*****************************************/
-// !Update the bootloader/explorer FLASH.
+// !Update the design FLASH.
 /*****************************************/
-				ssd1306_clear(spi_screen, screen_buf, 0);
-				gui_draw_string(spi_screen, screen_buf, PSTR("Design FLASH written successfully."), 0, 16);
-				gui_draw_string(spi_screen, screen_buf, PSTR("Now press the RESET button."), 6, 24);
+			ssd1306_clear(spi_screen, screen_buf, 0);
+			gui_draw_string(spi_screen, screen_buf, PSTR("Design FLASH written successfully."), 0, 16);
+			gui_draw_string(spi_screen, screen_buf, PSTR("Now press the RESET button."), 6, 24);
 // There is an ERROR in write function, the uSD remain locked after the file is write and closed when you try to reinitialize the uSD.
-				//f_open(&filObject, "current.txt", FA_READ); // Dummy open file.
-				// TODO hard RESSET.
-				//while(1);
-				return des_need_update;
-			} else if(kbd_state & KBD_B_KEY) {
+			//f_open(&filObject, "current.txt", FA_READ); // Dummy open file.
+			// TODO hard RESSET.
+			//while(1);
+			return des_need_update;
+		} else if(kbd_state & KBD_B_KEY) {
 			if(f1 == FR_OK) {
 				f_close(&filObject);
 				f_unlink("des.bin");
@@ -215,7 +215,7 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 	uint8_t flash_buf[64];
 	UINT b_read = 0x40;
 	bool des_updated = app_design_app_update(uSD, spi_screen, screen_buf, false);
-	if(f_open(&filObject, nameBuff, FA_READ) == FR_OK && !des_updated) {
+	if(f_open(&filObject, nameBuff, FA_READ) == FR_OK) {
 		bool different = false;
 		uint32_t cnt = 0;
 		gui_print_status(spi_screen, screen_buf, PSTR("Verifying FLASH APP..."), 0);
@@ -329,39 +329,19 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 		gui_print_status(spi_screen, screen_buf, PSTR("DONE"), 128);
 		// Wait 1000ms to be able to read the message on the display.
 		delay_ms(1000);
-		ssd1306_on(spi_screen, false);
 		BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING;
 		BOOT_STAT |= BOOT_STAT_FLASH_APP_NR;
 		// Jump to the first stage bootloader.
-		asm("jmp 0x1f804");
-	} else if(des_updated){
-		// Save the current loaded APP path, including APP name and extension, into the root directory "current.txt" file.
-		// This way will know at returning from the user APP, where to save the EEPROM and in future releases the RAM content.
-		util_fat_change_extension(nameBuff, nameBuff, PSTR("app"));
-		f_closedir(&dirObject);
-		f_getcwd((TCHAR*)flash_buf, 0x40);
-		strcat((char*)flash_buf, "/");
-		strcat((char*)flash_buf, nameBuff);
-		if(f_opendir(&dirObject, "/") == FR_OK) {
-			f_chdir("/");
-			strcpy_P(nameBuff, PSTR("current.txt"));
-			if(f_open(&filObject, nameBuff, FA_CREATE_ALWAYS | FA_WRITE) == FR_OK) {
-				char cp_path[64];
-				f_read(&filObject, cp_path, f_size(&filObject), &b_read);
-				if(strcpy(cp_path, (char*)flash_buf)) {
-					f_rewind(&filObject);
-					f_write(&filObject, (TCHAR*)flash_buf, strlen((char*)flash_buf) + 1, &b_read);
-					f_truncate(&filObject);
-				}
-				f_close(&filObject);
-				// There is an ERROR in write function, the uSD remain locked after the file is write and closed when you try to reinitialize the uSD.
-				// I add a open statement this seems to unlock the uSD.
-				f_open(&filObject, nameBuff, FA_READ);
-			}
-			f_closedir(&dirObject);
+		if(!des_updated){
+			ssd1306_on(spi_screen, false);
+			asm("jmp 0x1f804");
+		} else {
+			ssd1306_clear(spi_screen, screen_buf, 0);
+			gui_draw_string(spi_screen, screen_buf, PSTR("Design FLASH written successfully."), 0, 16);
+			gui_draw_string(spi_screen, screen_buf, PSTR("Now press the RESET button."), 6, 24);
+			while(1);
 		}
-		while(1);		
-	}
+	} 
 }
 
 inline void app_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
