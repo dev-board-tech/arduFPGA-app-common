@@ -31,27 +31,26 @@
 #include "mmc_sd_spi.h"
 #include "fat_fs/inc/ff.h"
 
-uint8_t *io_s;
-
 box_t box = {0, 128, 0, 64};// For ssd1306 128x64 pixels.
-
-
 //int main(void) __attribute__ ((naked)) __attribute__ ((section (".init1")));
 //-Wl,--section-start,.data=0x800B00,--defsym=__heap_end=0x807fff
 
 spi_t spi;
 _25flash_t flash_des;
 //_25flash_t flash_app;
+mmc_sd_t uSD;
+FATFS fatFs;
+DIR dirObject;
+FILINFO fInfo;
+FIL filObject;
+
+bool usd_state;
+
 #ifndef SSD1306_USE_NO_BUF
 uint8_t screen_buf[1024];
 #else /* SSD1306_USE_NO_BUF */
 uint8_t screen_buf[1];
 #endif /* SSD1306_USE_NO_BUF */
-mmc_sd_t uSD;
-FATFS fatFs;
-FIL filObject;
-
-bool usd_state;
 
 int main(void)
 {

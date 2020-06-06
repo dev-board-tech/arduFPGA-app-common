@@ -44,9 +44,9 @@ static const char* const str[] = {_VOLUME_STRS};
 FRESULT res = FR_OK;
 uint8_t fattrib = 0;
 char nameBuff[27];
-DIR dirObject;
-FILINFO fInfo;
-FIL filObject;
+extern DIR dirObject;
+extern FILINFO fInfo;
+extern FIL filObject;
 bool fs_mounted = false;
 
 bool gui_initialized = false;
