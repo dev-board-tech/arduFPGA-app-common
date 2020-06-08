@@ -52,7 +52,7 @@ int main(void) __attribute__ ((naked)) __attribute__ ((section (".init5")));
 //void end(void) __attribute__ ((naked)) __attribute__ ((section (".init6")));
 
 /* In order to suspend the user application we need to backup all registers SREG and special registers. */
-void enter_sleep() {
+void enter_sleep() {// FOR FUTURE USE
 /*
  * Save all registers, special registers and SREG.
  */
@@ -236,12 +236,13 @@ void init() {
 	"rjmp _int \n\t"
 	"rjmp main \n\t"
 	"rjmp _set_serv_addr \n\t"
+	"rjmp _flash_write \n\t"
 	"_init: \n\t"
 	"cli \n\t"
 	"eor	r1, r1 \n\t"
 	"out	0x3f, r1 \n\t"//	; 63
 	"ldi	r28, 0xFF \n\t"//	; 255
-	"ldi	r29, 0x0C \n\t"//	; 10
+	"ldi	r29, 0xFF \n\t"//	; 10
 	"out	0x3e, r29 \n\t"//	; 62
 	"out	0x3d, r28 \n\t");//	; 61
 }
@@ -314,6 +315,37 @@ void _set_serv_addr(uint16_t service_addr) {
 	_SFR_IO8(0x3F) = tmp;
 	asm("pop r25");
 	asm("ret");
+}
+
+void _flash_write(uint32_t a, uint16_t *buf, uint16_t len) {
+	asm("push r26");
+	uint8_t tmp = _SFR_IO8(0x3F);
+	cli();
+	asm("push r18");
+	asm("push r19");
+	asm("push r24");
+	asm("push r25");
+	asm("push zl");
+	asm("push zh");
+	convert16to8 co;
+	co.i16 = a;
+	F_CNT_L = co.Byte0;
+	F_CNT_H = co.Byte1;
+	BOOT_STAT |= BOOT_STAT_APP_PGM_WR_EN;
+	while (len--){
+		co.i16 = *buf++;
+		F_DATA_L = co.Byte0;
+		F_DATA_H = co.Byte1;
+	}
+	BOOT_STAT &= ~BOOT_STAT_APP_PGM_WR_EN;
+	asm("pop zh");
+	asm("pop zl");
+	asm("pop r25");
+	asm("pop r24");
+	asm("pop r19");
+	asm("pop r18");
+	_SFR_IO8(0x3F) = tmp;
+	asm("pop r26");
 }
 
 void char_received(int8_t c) {
