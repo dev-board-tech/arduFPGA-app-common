@@ -253,11 +253,19 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 			}
 			// Wait 1000ms to be able to read the message on the display.
 			delay_ms(1000);
-			ssd1306_on(spi_screen, false);
 			BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING;
 			BOOT_STAT |= BOOT_STAT_FLASH_APP_NR;
-			// Jump to the first stage boot loader, to launch the loaded APP.
-			asm("jmp 0x1f804");
+			if(!des_updated){
+				//Turn OFF the display, maybe the loaded application does not need him, if it use it, it will need to turn it ON.
+				ssd1306_on(spi_screen, false);
+				// Jump to the first stage boot loader, to launch the loaded APP.
+				asm("jmp 0x1f804");
+				} else {
+				ssd1306_clear(spi_screen, screen_buf, 0);
+				gui_draw_string(spi_screen, screen_buf, PSTR("Design FLASH written successfully."), 0, 16);
+				gui_draw_string(spi_screen, screen_buf, PSTR("Now press the RESET button."), 6, 24);
+				while(1);
+			}
 		}
 		// The selected APP is not the same as the one written on the FLASH.
 		// Erase the APP section in the FLASH.
@@ -333,7 +341,9 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 		BOOT_STAT |= BOOT_STAT_FLASH_APP_NR;
 		// Jump to the first stage bootloader.
 		if(!des_updated){
+			//Turn OFF the display, maybe the loaded application does not need him, if it use it, it will need to turn it ON.
 			ssd1306_on(spi_screen, false);
+			// Jump to the first stage boot loader, to launch the loaded APP.
 			asm("jmp 0x1f804");
 		} else {
 			ssd1306_clear(spi_screen, screen_buf, 0);
