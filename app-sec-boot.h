@@ -49,6 +49,12 @@ extern bool gui_initialized;
 
 const char design_update_err_message[] PROGMEM = "Err reading design update...\r\nThe design need to be loaded\r\n with a programmer";
 
+void app_infinite_loop() {
+	for(uint16_t cnt = 0; cnt < 200; cnt++)
+		spi_wrd_byte(flash_des.spi, 0xFF);
+	while(1);
+}
+
 // If des.bin and app.bin are found in the root, it will ask for update, these files will be deleted.
 // If des.bin and app.bin are found in the platform directory, will update the design and explorer without asking for update, is considered a change in used platform, these files will not be deleted.
 inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf, bool ask_update) {
@@ -126,9 +132,13 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 				}
 				_24flash_write_status(&flash_des, 0xBC);
 				f_close(&filObject);
-				if(ask_update) {
+				/*if(ask_update) {
 					f_unlink("exp.bin");
-				}
+				}*/
+			} else {
+				/*if(ask_update) {
+					f_unlink("exp.bin");
+				}*/
 			}
 /*****************************************/
 // !Update the bootloader/explorer FLASH.
@@ -173,14 +183,18 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 						} else {
 							gui_print_status(spi_screen, screen_buf, design_update_err_message, 0);
 							_24flash_write_status(&flash_des, 0xBC);
-							while(1);
+							app_infinite_loop();
 						}
 					}
 					_24flash_write_status(&flash_des, 0xBC);
 					f_close(&filObject);
-					if(ask_update) {
+					/*if(ask_update) {
 						f_unlink("des.bin");
-					}
+					}*/
+				} else {
+					/*if(ask_update) {
+						f_unlink("des.bin");
+					}*/
 				}
 			}
 /*****************************************/
@@ -192,15 +206,15 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 // There is an ERROR in write function, the uSD remain locked after the file is write and closed when you try to reinitialize the uSD.
 			//f_open(&filObject, "current.txt", FA_READ); // Dummy open file.
 			// TODO hard RESSET.
-			//while(1);
+			//app_infinite_loop();
 			return des_need_update;
 		} else if(kbd_state & KBD_B_KEY) {
 			if(f1 == FR_OK) {
 				f_close(&filObject);
-				f_unlink("des.bin");
+				//f_unlink("des.bin");
 			}
 			if(f2 == FR_OK) {
-				f_unlink("exp.bin");
+				//f_unlink("exp.bin");
 			}
 			return false;
 		}
@@ -264,7 +278,7 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 				ssd1306_clear(spi_screen, screen_buf, 0);
 				gui_draw_string(spi_screen, screen_buf, PSTR("Design FLASH written successfully."), 0, 16);
 				gui_draw_string(spi_screen, screen_buf, PSTR("Now press the RESET button."), 6, 24);
-				while(1);
+				app_infinite_loop();
 			}
 		}
 		// The selected APP is not the same as the one written on the FLASH.
@@ -349,7 +363,7 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 			ssd1306_clear(spi_screen, screen_buf, 0);
 			gui_draw_string(spi_screen, screen_buf, PSTR("Design FLASH written successfully."), 0, 16);
 			gui_draw_string(spi_screen, screen_buf, PSTR("Now press the RESET button."), 6, 24);
-			while(1);
+			app_infinite_loop();
 		}
 	} 
 }
@@ -365,7 +379,7 @@ inline void app_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_
 			// Check if a design update has been found.
 			/*****************************************/
 			if(app_design_app_update(uSD, spi_screen, screen_buf, true)) {
-				while(1);
+				app_infinite_loop();
 			}
 			/*****************************************/
 			// !Check if a design update has been found.
@@ -423,7 +437,7 @@ inline void app_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_
 										eeprom_read_block(buf, (void *)cnt, 0x40);
 										if(f_write(&filObject, buf, 0x40, &b_write) == FR_OK) {
 											if(b_write != 0x40) {
-												f_unlink(filename);
+												//f_unlink(filename);
 												return;
 											}
 										}

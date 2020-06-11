@@ -31,6 +31,7 @@
 #include "kbd.h"
 #include GUI_APP_FILE_INCLUDE
 
+#define FILENAME_MAX_LEN		20
 
 uint8_t disp_up_limit = GUI_UPPER_LIMIT_ROW;
 uint8_t disp_dn_limit = GUI_LOWER_LIMIT_ROW;
@@ -43,7 +44,7 @@ uint16_t items_scanned = 0;
 static const char* const str[] = {_VOLUME_STRS};
 FRESULT res = FR_OK;
 uint8_t fattrib = 0;
-char nameBuff[27];
+char nameBuff[FILENAME_MAX_LEN];
 extern DIR dirObject;
 extern FILINFO fInfo;
 extern FIL filObject;
@@ -165,7 +166,7 @@ void gui_paint(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 					if(menu_scan >= menu_pos && menu_scan < menu_pos +  (disp_dn_limit + 1) - disp_up_limit) {
 						if(menu_scan == menu_sel) {
 							fattrib = fInfo.fattrib;
-							strcpy(nameBuff, fInfo.fname);
+							strncpy(nameBuff, fInfo.fname, FILENAME_MAX_LEN);
 						}
 // Check and print the selected line.
 						if(file_checked == -1)

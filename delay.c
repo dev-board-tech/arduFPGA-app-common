@@ -36,7 +36,7 @@ void delay_ms(uint16_t ms) {
 }
 
 void delay_s(uint16_t s) {
-	volatile int32_t s_ = (s * (F_CPU / 37)) - 50;	
+	volatile int32_t s_ = (s * (F_CPU / 37)) - 50;
 	if(s_ < 0)
 		return;
 	while(s_--);

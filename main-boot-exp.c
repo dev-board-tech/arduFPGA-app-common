@@ -52,6 +52,20 @@ uint8_t screen_buf[1024];
 uint8_t screen_buf[1];
 #endif /* SSD1306_USE_NO_BUF */
 
+/*void init(void) __attribute__ ((naked)) __attribute__ ((section (".init0")));
+int main(void) __attribute__ ((naked)) __attribute__ ((section (".init5")));
+void init() {
+	__asm__ __volatile__ (
+	"_init: \n\t"
+	"cli \n\t"
+	"eor	r1, r1 \n\t"
+	"out	0x3f, r1 \n\t"//	; 63
+	"ldi	r28, 0xFF \n\t"//	; 255
+	"ldi	r29, 0x08 \n\t"//	; 10
+	"out	0x3e, r29 \n\t"//	; 62
+	"out	0x3d, r28 \n\t");//	; 61
+}
+*/
 int main(void)
 {
 	asm("cli");
