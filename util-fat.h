@@ -23,7 +23,7 @@
 #define UTIL_FAT_H_
 
 
-inline void util_fat_strip_extension(char *ret_path, char *path) {
+void util_fat_strip_extension(char *ret_path, char *path) {
 	char *path_int = path + strlen(path);
 	do
 	{
@@ -38,7 +38,7 @@ inline void util_fat_strip_extension(char *ret_path, char *path) {
 	}
 }
 
-inline char *util_fat_get_path(char *ret_path, char *ptr) {
+char *util_fat_get_path(char *ret_path, char *ptr) {
 	// Check if a separator exists.
 	char *start_ptr = strchr(ptr, '/');
 	// If a separator does not exists signify that is not a path.
@@ -59,7 +59,7 @@ inline char *util_fat_get_path(char *ret_path, char *ptr) {
 	return end_ptr;
 }
 
-inline void util_fat_get_filename(char *ret_path, char *path) {
+void util_fat_get_filename(char *ret_path, char *path) {
 	char *path_int = path + strlen(path);
 	// Scan for the first separator from the right to left.
 	do {
@@ -71,7 +71,7 @@ inline void util_fat_get_filename(char *ret_path, char *path) {
 	}
 }
 
-inline void util_fat_get_extension(char *ret_path, char *path) {
+void util_fat_get_extension(char *ret_path, char *path) {
 	char *path_int = path + strlen(path);
 	do
 	{
@@ -82,7 +82,7 @@ inline void util_fat_get_extension(char *ret_path, char *path) {
 	}
 }
 
-inline void util_fat_change_extension(char *ret_path, char *path, const char *extension) {
+void util_fat_change_extension(char *ret_path, char *path, const char *extension) {
 	char *path_int = path + strlen(path);
 	// Scan for the first dot from right to left.
 	do {
@@ -103,7 +103,7 @@ inline void util_fat_change_extension(char *ret_path, char *path, const char *ex
 	}
 }
 
-inline bool util_fat_fallow_path(DIR *dirObject, char *tmp_buf, char *path) {
+bool util_fat_fallow_path(DIR *dirObject, char *tmp_buf, char *path) {
 	// Extract the path to the application.
 	char *ptr = (char*)path;
 	// Navigate to the APP directory.

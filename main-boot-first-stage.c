@@ -40,6 +40,7 @@ volatile bool after_power_up = true;
 uint8_t flash_buf[256];
 volatile uint8_t led_color = 0;
 volatile uint8_t debug_char_in_cnt = 0;
+volatile uint8_t volume;
 volatile int8_t debug_char_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 spi_t spi;
@@ -172,6 +173,14 @@ void enter_sleep() {// FOR FUTURE USE
 	);
 }
 
+void _flash_des_write(uint32_t addr, uint8_t *buff, uint16_t size) {
+	_25flash_write(&flash_des, addr, (void *)buff, size);
+}
+
+void _flash_des_erase(uint32_t addr) {
+	_25flash_erase(&flash_des, addr);
+}
+
 void ram_restore() {
 	/* Load the RAM size. */
 	_25flash_read(&flash_des, FLASH_APP_USER_START_ADDR + FLASH_APP_MEMORY_SIZES_OFFSET + FLASH_APP_MEMORY_SIZES_RAM_OFFSET, flash_buf, 4);
@@ -196,19 +205,19 @@ void ram_backup() {
 	}
 	/* Erase FLASH user area RAM section. */
 	for (uint16_t cnt = 0x100; cnt < 0x20000 + 0x100; cnt += 0x1000) {
-		_25flash_erase(&flash_des, FLASH_APP_USER_START_ADDR + FLASH_APP_RAM_OFFSET + cnt);
+		_flash_des_erase(FLASH_APP_USER_START_ADDR + FLASH_APP_RAM_OFFSET + cnt);
 	}
 	/* Back-up the RAM content to FLASH user area RAM section. */
 	for (uint16_t cnt = 0x100; cnt < ram_size + 0x100; cnt += 0x100) {
-		_25flash_write(&flash_des, FLASH_APP_USER_START_ADDR + FLASH_APP_RAM_OFFSET + cnt, (void *)cnt, 0x100);
+		_flash_des_write(FLASH_APP_USER_START_ADDR + FLASH_APP_RAM_OFFSET + cnt, (void *)cnt, 0x100);
 	}
 }
 
-void flash_load (uint32_t flash_app_addr, bool eep_load) {
+void flash_load (uint32_t flash_app_addr) {
 	F_CNT_L = 0;
 	F_CNT_H = 0;
 
-	PORTB = LED_R;
+	PORTB = (PORTB & 0b00011111) | LED_R;
 	/* Load the APP size. */
 	_25flash_read(&flash_des, flash_app_addr + FLASH_APP_MEMORY_SIZES_OFFSET + FLASH_APP_MEMORY_SIZES_PGM_OFFSET, flash_buf, 4);
 	uint32_t app_size = (uint32_t)flash_buf[3] << 24 | (uint32_t)flash_buf[2] << 16 | (uint32_t)flash_buf[1] << 8 | (uint32_t)flash_buf[0];
@@ -227,7 +236,7 @@ void flash_load (uint32_t flash_app_addr, bool eep_load) {
 	}
 	BOOT_STAT &= ~BOOT_STAT_APP_PGM_WR_EN;
 
-	PORTB = LED_B;
+	PORTB = (PORTB & 0b00011111);
 }
 
 void init() {
@@ -237,6 +246,8 @@ void init() {
 	"rjmp main \n\t"
 	"rjmp _set_serv_addr \n\t"
 	"rjmp _flash_write \n\t"
+	"rjmp _flash_des_erase \n\t"
+	"rjmp _flash_des_write \n\t"
 	"_init: \n\t"
 	"cli \n\t"
 	"eor	r1, r1 \n\t"
@@ -249,12 +260,14 @@ void init() {
 
 int main(void)
 {
+	service_Ptr = NULL;
 	BOOT_STAT |= BOOT_STAT_IO_RST;
 	asm("nop");
 	BOOT_STAT &= ~BOOT_STAT_IO_RST;
 	
-    DDRB = 0b11100000;
-    PORTB = 0b11100000;
+    DDRA = 0b00011111;
+	DDRB = 0b11100000;
+    PORTB |= 0b11100000;
     
 	SPI_SSD1306_CS_DEASSERT();
 	SPI_uSD_CS_DEASSERT();
@@ -294,39 +307,30 @@ int main(void)
 			if((flash_buf[0] != 0xFF || flash_buf[1] != 0xFF || flash_buf[2] != 0xFF || flash_buf[3] != 0xFF)) {
 				BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING;
 				BOOT_STAT |= BOOT_STAT_FLASH_APP_NR;
-				flash_app_addr = FLASH_APP_USER_START_ADDR;
+				//flash_app_addr = FLASH_APP_USER_START_ADDR;
 			}
 		}
 	}
 #endif
 	
-	flash_load(flash_app_addr, (BOOT_STAT & BOOT_STAT_FLASH_APP_NR) ? true : false);
+	flash_load(flash_app_addr);
 	
 	asm("sei");
 	asm("jmp 0x0000");
 }
 
-void _set_serv_addr(uint16_t service_addr) __attribute__ ((naked));
 void _set_serv_addr(uint16_t service_addr) {
-	asm("push r25");
 	uint8_t tmp = _SFR_IO8(0x3F);
 	cli();
 	service_Ptr = (void *)service_addr;
 	_SFR_IO8(0x3F) = tmp;
-	asm("pop r25");
-	asm("ret");
+	//asm("ret");
 }
 
 void _flash_write(uint32_t a, uint16_t *buf, uint16_t len) {
 	asm("push r26");
 	uint8_t tmp = _SFR_IO8(0x3F);
 	cli();
-	asm("push r18");
-	asm("push r19");
-	asm("push r24");
-	asm("push r25");
-	asm("push zl");
-	asm("push zh");
 	convert16to8 co;
 	co.i16 = a;
 	F_CNT_L = co.Byte0;
@@ -338,15 +342,10 @@ void _flash_write(uint32_t a, uint16_t *buf, uint16_t len) {
 		F_DATA_H = co.Byte1;
 	}
 	BOOT_STAT &= ~BOOT_STAT_APP_PGM_WR_EN;
-	asm("pop zh");
-	asm("pop zl");
-	asm("pop r25");
-	asm("pop r24");
-	asm("pop r19");
-	asm("pop r18");
 	_SFR_IO8(0x3F) = tmp;
 	asm("pop r26");
 }
+
 
 void char_received(int8_t c) {
 	if(c == 0x08 && debug_char_buf != 0) {
@@ -394,6 +393,7 @@ void _int(void) {
 	if(service_Ptr) {
 		service_Ptr();
 	}
+#ifdef DEBUG_ENABLE
 	if(BOOT_STAT & BOOT_STAT_DEBUG_EN) {
 		int16_t c;
 		c = uart_get_c_nb();
@@ -401,74 +401,67 @@ void _int(void) {
 			char_received((uint8_t) c);
 		}
 	}
+#endif
 	if(KBD_IN & KBD_INT_PIN) {
+/*
+ * Load GUI boot-loader only if user APP is running, if INTERRUPT button is press less than 1 second.
+ */
+		if(cnt_int_key_k > 100 && cnt_int_key_k < 500 && BOOT_STAT & BOOT_STAT_USR_APP_RUNNING) {
+			BOOT_STAT &= ~BOOT_STAT_USR_APP_RUNNING;
+			BOOT_STAT &= ~BOOT_STAT_FLASH_APP_NR;
+			led_color = 0;
+			asm("sei");
+			main();
+		}
 		cnt_int_key_k = 0;
-		pushed &= ~KBD_INT_PIN;
+		//pushed &= ~KBD_INT_PIN;
+		DISC_USR_KBD_PORT &= ~DISC_USR_KBD_PIN_bm;
 	} else {
-		if(cnt_int_key_k != 2000) {
+		DISC_USR_KBD_PORT |= DISC_USR_KBD_PIN_bm;
+		if(cnt_int_key_k != 500) {
 			cnt_int_key_k++;
 		} else {
 /*
  * If the INT button was pressed more than two seconds.
  */
-			if (~pushed & KBD_INT_PIN) {
+			uint8_t tmp_kbd = KBD_IN;
+			if (pushed ^ tmp_kbd) {
 /*
  * Parse the reason of INT pressing.
  */
-				if(~KBD_IN & KBD_U_PIN) {
+				if(~tmp_kbd & KBD_B_PIN) {
+					pushed &= ~KBD_B_PIN;
 /*
- * Change the color of the LED in order: R, G, B, OFF.
+ * Change the color of the LED in order: B, G, R.
  */
-					switch(led_color) {
-						case 0:
-							PORTB = LED_R;
-							led_color++;
-							break;
-						case 1:
-							PORTB = LED_G;
-							led_color++;
-							break;
-						case 2:
-							PORTB = LED_B;
-							led_color++;
-							break;
-						case 3:
-							PORTB = 0;
-							led_color = 0;
-							break;
+					led_color = led_color << 1;
+					if(!led_color) {
+						led_color = LED_B;
 					}
-				} else if(~KBD_IN & KBD_D_PIN) {
+					PORTB = (PORTB & 0b00011111) | led_color;
+				} else if(~tmp_kbd & KBD_K_PIN){
+					pushed &= ~KBD_K_PIN;
 					led_color = 0;
+					PORTB = (PORTB & 0b00011111) | (PORTB & (LED_R | LED_G | LED_B) ?  0 : LED_R | LED_G | LED_B);
+				} else if(~tmp_kbd & KBD_U_PIN) {
 /*
- * Lantern flashlight, ON, OF led in WHITE mode.
+ * Volume UP.
  */
-					if(PORTB & (LED_R | LED_G | LED_B)) {
-						PORTB = 0;
-					} else {
-						PORTB = LED_R | LED_G | LED_B;
+					pushed &= ~KBD_U_PIN;
+					if(PWM_VOLUME_PORT & PWM_VOLIME_PIN_gm) {
+						PWM_VOLUME_PORT = (PWM_VOLUME_PORT & ~PWM_VOLIME_PIN_gm) | ((PWM_VOLUME_PORT - (1 << PWM_VOLIME_PIN_gp)) & PWM_VOLIME_PIN_gm);
 					}
-				} else {
+				} else if(~tmp_kbd & KBD_D_PIN) {
 /*
- * Load GUI boot-loader only if user APP is running.
+ * Volume DOWN.
  */
-					if(BOOT_STAT & BOOT_STAT_USR_APP_RUNNING) {
-						SPI_SSD1306_CS_DEASSERT();
-						SPI_uSD_CS_DEASSERT();
-						SPI_ADC_CS_DEASSERT();
-						SPI_DES_CS_DEASSERT();
-						SPI_APP_CS_DEASSERT();
-						SPI_xCS_CS_DEASSERT();
-						SPI_xDCS_CS_DEASSERT();
-						flash_load(FLASH_APP_EXPLORER_START_ADDR, false);
-						BOOT_STAT &= ~BOOT_STAT_USR_APP_RUNNING;
-						BOOT_STAT &= ~BOOT_STAT_FLASH_APP_NR;
-						led_color = 0;
-						asm("sei");
-						asm("jmp 0x0000");
+					pushed &= ~KBD_D_PIN;
+					if((PWM_VOLUME_PORT & PWM_VOLIME_PIN_gm) != PWM_VOLIME_PIN_gm) {
+						PWM_VOLUME_PORT = (PWM_VOLUME_PORT & ~PWM_VOLIME_PIN_gm) | ((PWM_VOLUME_PORT + (1 << PWM_VOLIME_PIN_gp)) & PWM_VOLIME_PIN_gm);
 					}
 				}
 			}
-			pushed |= KBD_INT_PIN;
+			pushed |= tmp_kbd;
 		}
 	}
 }

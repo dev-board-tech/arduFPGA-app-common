@@ -31,7 +31,7 @@
 #include "kbd.h"
 #include GUI_APP_FILE_INCLUDE
 
-#define FILENAME_MAX_LEN		20
+#define FILENAME_MAX_LEN		32
 
 uint8_t disp_up_limit = GUI_UPPER_LIMIT_ROW;
 uint8_t disp_dn_limit = GUI_LOWER_LIMIT_ROW;

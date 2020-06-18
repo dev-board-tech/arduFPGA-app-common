@@ -57,7 +57,7 @@ void app_infinite_loop() {
 
 // If des.bin and app.bin are found in the root, it will ask for update, these files will be deleted.
 // If des.bin and app.bin are found in the platform directory, will update the design and explorer without asking for update, is considered a change in used platform, these files will not be deleted.
-inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf, bool ask_update) {
+bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf, bool ask_update) {
 	bool des_need_update = false;
 	bool boot_need_update = false;
 	if(ask_update) {
@@ -225,7 +225,7 @@ inline bool app_design_app_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *scr
 	return false;
 }
 
-inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
+void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 	uint8_t flash_buf[64];
 	UINT b_read = 0x40;
 	bool des_updated = app_design_app_update(uSD, spi_screen, screen_buf, false);
@@ -273,8 +273,9 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 				//Turn OFF the display, maybe the loaded application does not need him, if it use it, it will need to turn it ON.
 				ssd1306_on(spi_screen, false);
 				// Jump to the first stage boot loader, to launch the loaded APP.
-				asm("jmp 0x1f804");
-				} else {
+				void (*vect_main)(void) = (void *)BOOT_VECTOR_MAIN;
+				vect_main();
+			} else {
 				ssd1306_clear(spi_screen, screen_buf, 0);
 				gui_draw_string(spi_screen, screen_buf, PSTR("Design FLASH written successfully."), 0, 16);
 				gui_draw_string(spi_screen, screen_buf, PSTR("Now press the RESET button."), 6, 24);
@@ -285,35 +286,32 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 		// Erase the APP section in the FLASH.
 		gui_print_status(spi_screen, screen_buf, PSTR("Erasing FLASH APP..."), 0);
 		_24flash_write_status(&flash_des, 0x80);
-		for(cnt = FLASH_APP_USER_START_ADDR; cnt < FLASH_APP_USER_START_ADDR + FLASH_APP_RAM_OFFSET; cnt += 0x1000) {
+		for(cnt = FLASH_APP_USER_START_ADDR; cnt < FLASH_APP_USER_START_ADDR + FLASH_APP_ROM_ZIZE; cnt += 0x1000) {
 			_25flash_erase(&flash_des, cnt);
 			DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, (cnt - FLASH_APP_USER_START_ADDR) >> 10, 32, 4, 8, true, true);
 		}
 		// Write the selected APP from uSD to the FLASH.
 		f_rewind(&filObject);
 		gui_print_status(spi_screen, screen_buf, PSTR("Writing FLASH APP..."), 0);
-		for(cnt = 0; cnt < f_size(&filObject); cnt += 0x40) {
+		//uint32_t fsize = f_size(&filObject);
+		//fsize = fsize & (FLASH_APP_ROM_ZIZE - 1);
+		for(cnt = 0; cnt < 0x8000; cnt += 0x40) {
 			if(f_read(&filObject, flash_buf, 0x40, &b_read) != FR_OK) {
 				gui_print_status(spi_screen, screen_buf, PSTR("ERR reading file."), 128);
 				f_close(&filObject);
+				delay_ms(2000);
 				return;
 			}
-			if(b_read != 0x40) {
-				_25flash_write(&flash_des, FLASH_APP_USER_START_ADDR + cnt, flash_buf, b_read);
-				DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, cnt >> 8, 32, 2, 8, true, true);
-				break;
-			}
-			_25flash_write(&flash_des, FLASH_APP_USER_START_ADDR + cnt, flash_buf, 0x40);
+			_25flash_write(&flash_des, FLASH_APP_USER_START_ADDR + cnt, flash_buf, b_read);
 			DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, cnt >> 8, 32, 2, 8, true, true);
 		}
 		_24flash_write_status(&flash_des, 0xBC);
-		if(cnt + b_read != f_size(&filObject)) {
-			gui_print_status(spi_screen, screen_buf, PSTR("ERR reading APP file."), 128);
-		}
 		f_close(&filObject);
 		// Check if a EEPROM file is on the uSD, if it is copy the data into internal emulated EEPROM.
 		util_fat_change_extension(nameBuff, nameBuff, PSTR("eep"));
 		if(f_open(&filObject, nameBuff, FA_READ) == FR_OK) {
+			//fsize = f_size(&filObject);
+			//fsize = fsize & (FLASH_APP_EEP_SIZE - 1);
 			for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt+= 0x40) {
 				if(f_read(&filObject, flash_buf, 0x40, &b_read) == FR_OK) {
 					eeprom_write_block(flash_buf, (void *)cnt, 0x40);
@@ -358,7 +356,9 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 			//Turn OFF the display, maybe the loaded application does not need him, if it use it, it will need to turn it ON.
 			ssd1306_on(spi_screen, false);
 			// Jump to the first stage boot loader, to launch the loaded APP.
-			asm("jmp 0x1f804");
+			//asm("jmp 0x1f804");
+			void (*vect_main)(void) = (void *)BOOT_VECTOR_MAIN;
+			vect_main();
 		} else {
 			ssd1306_clear(spi_screen, screen_buf, 0);
 			gui_draw_string(spi_screen, screen_buf, PSTR("Design FLASH written successfully."), 0, 16);
@@ -368,13 +368,13 @@ inline void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) 
 	} 
 }
 
-inline void app_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
+void app_card_inserted(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 	if(f_opendir(&dirObject, "/") == FR_OK) {
 		f_chdir("/");
 		if(!gui_initialized) {
 			gui_initialized = true;
 			uint8_t buf[64];
-			#ifdef USE_DESIGN_UPGRADE
+#ifdef USE_DESIGN_UPGRADE
 			/*****************************************/
 			// Check if a design update has been found.
 			/*****************************************/
@@ -384,7 +384,7 @@ inline void app_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_
 			/*****************************************/
 			// !Check if a design update has been found.
 			/*****************************************/
-			#endif
+#endif
 			/*****************************************/
 			// Read the last opened application path.
 			/*****************************************/
@@ -406,10 +406,13 @@ inline void app_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_
 					// Check if EEPROM was edited.
 					/*****************************************/
 					// If EEPROM was edited then the explorer was oppened after a user application was interrupted, if EEPROM was not edited then the explorer is opened after a user application was interrupted or after a power up (no need to save EEPROM to uSD).
-					if(BOOT_STAT & BOOT_STAT_EEP_EDITED) {
-						BOOT_STAT &= ~BOOT_STAT_EEP_EDITED;
-						// Check if the path was successfully fallow.
-						if(fallow_ok) {
+					if(fallow_ok) {
+						/*if(BOOT_STAT & BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING) {
+							
+						} else*/
+						if(BOOT_STAT & BOOT_STAT_EEP_EDITED) {
+							BOOT_STAT &= ~BOOT_STAT_EEP_EDITED;
+							// Check if the path was successfully fallow.
 							util_fat_change_extension(filename, filename, PSTR("eep"));
 							bool eep_different = false;
 							// Try to open the EEPROM file.
@@ -449,10 +452,10 @@ inline void app_design_update(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_
 									f_open(&filObject, filename, FA_READ);
 								}
 							}
+							/*****************************************/
+							// !Check if EEPROM was edited.
+							/*****************************************/
 						}
-						/*****************************************/
-						// !Check if EEPROM was edited.
-						/*****************************************/
 					}
 				}
 				/*****************************************/
