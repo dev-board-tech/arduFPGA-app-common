@@ -299,7 +299,7 @@ int main(void)
 #ifdef POWER_UP_WITH_USER_APP	
 // If at power UP the L button is pressed will skip loading the user application, will load the GUI boot-loader.
 // If in the user application is something wrong and freezes the core, user has a way to avoid loading the APP and load the GUI boot-loader instead.
-	if(KBD_IN & KBD_K_PIN) {
+	if(KBD_IN & KBD_INT_PIN) {
 		_25flash_read(&flash_des, FLASH_APP_USER_START_ADDR, flash_buf, 4);
 // After power UP check if a user application is written in the FLASH, if not, proceed with launching the explorer.
 		if(after_power_up) {
@@ -439,8 +439,8 @@ void _int(void) {
 						led_color = LED_B;
 					}
 					PORTB = (PORTB & 0b00011111) | led_color;
-				} else if(~tmp_kbd & KBD_K_PIN){
-					pushed &= ~KBD_K_PIN;
+				} else if(~tmp_kbd & KBD_A_PIN){
+					pushed &= ~KBD_A_PIN;
 					led_color = 0;
 					PORTB = (PORTB & 0b00011111) | (PORTB & (LED_R | LED_G | LED_B) ?  0 : LED_R | LED_G | LED_B);
 				} else if(~tmp_kbd & KBD_U_PIN) {
