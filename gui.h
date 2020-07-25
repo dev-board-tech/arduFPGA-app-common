@@ -26,6 +26,9 @@
 #include "mmc_sd_spi.h"
 #include "device/ssd1306.h"
 
+extern bool gui_redirect_up_btn;
+extern bool gui_redirect_dn_btn;
+
 inline void gui_print_status(spi_t *spi_screen, uint8_t *screen_buf, const char *text, uint8_t bar_len) {
 	char buf[32];
 	strcpy_P(buf, text);
@@ -47,5 +50,21 @@ inline void gui_draw_string(spi_t *spi_screen, uint8_t *screen_buf, const char *
 void gui_init(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf);
 void gui_idle(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf);
 void gui_paint(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf);
+
+void inline gui_set_redirect_up_btn(bool state) {
+	gui_redirect_up_btn = state;
+}
+
+bool inline gui_get_redirect_up_btn() {
+	return gui_redirect_up_btn;
+}
+
+void inline gui_set_redirect_dn_btn(bool state) {
+	gui_redirect_dn_btn = state;
+}
+
+bool inline gui_get_redirect_dn_btn() {
+	return gui_redirect_dn_btn;
+}
 
 #endif /* GUI_H_ */

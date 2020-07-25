@@ -153,12 +153,16 @@
 #define SPI_CS_6_PIN				(1<<0)
 #define SPI_xCS_CS_ASSERT()			SPI_CS_6_PORT &= ~SPI_CS_6_PIN
 #define SPI_xCS_CS_DEASSERT()		SPI_CS_6_PORT |= SPI_CS_6_PIN
+#define VS10xx_xCS_ASSERT()			SPI_xCS_CS_ASSERT()
+#define VS10xx_xCS_DEASSERT()		SPI_xCS_CS_DEASSERT()
 
 #define SPI_CS_7_DIR				DDRD
 #define SPI_CS_7_PORT				PORTD
 #define SPI_CS_7_PIN				(1<<5)
 #define SPI_xDCS_CS_ASSERT()		SPI_CS_7_PORT &= ~SPI_CS_7_PIN
 #define SPI_xDCS_CS_DEASSERT()		SPI_CS_7_PORT |= SPI_CS_7_PIN
+#define VS10xx_xDCS_ASSERT()		SPI_xDCS_CS_ASSERT()
+#define VS10xx_xDCS_DEASSERT()		SPI_xDCS_CS_DEASSERT()
 
 /*******************************************/
 

@@ -334,7 +334,7 @@ void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 			if(f_open(&filObject, nameBuff, FA_CREATE_ALWAYS | FA_WRITE) == FR_OK) {
 				char cp_path[64];
 				f_read(&filObject, cp_path, f_size(&filObject), &b_read);
-				if(strcpy(cp_path, (char*)flash_buf)) {
+				if(strcmp(cp_path, (char*)flash_buf)) {
 					f_rewind(&filObject);
 					f_write(&filObject, (TCHAR*)flash_buf, strlen((char*)flash_buf) + 1, &b_read);
 					f_truncate(&filObject);

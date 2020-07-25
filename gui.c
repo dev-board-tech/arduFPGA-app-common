@@ -49,6 +49,8 @@ extern DIR dirObject;
 extern FILINFO fInfo;
 extern FIL filObject;
 bool fs_mounted = false;
+bool gui_redirect_up_btn = false;
+bool gui_redirect_dn_btn = false;
 
 bool gui_initialized = false;
 
@@ -77,23 +79,39 @@ void gui_idle(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 		uint8_t kbd_state = kbd_get();
 // Navigate the menu UP.
 		if(kbd_state & KBD_U_KEY) {
-			if(menu_sel > 0) {
-				menu_sel--;
+#ifdef GUI_ACT_FUNC_ON_UP_BTN_PRESS
+			if(gui_redirect_up_btn) {
+				GUI_ACT_FUNC_ON_UP_BTN_PRESS(uSD, spi_screen, screen_buf);
+			} else {
+#endif
+				if(menu_sel > 0) {
+					menu_sel--;
+				}
+				if(menu_sel < menu_pos) {
+					menu_pos = menu_sel;
+				}
+				gui_paint(uSD, spi_screen, screen_buf);
+#ifdef GUI_ACT_FUNC_ON_UP_BTN_PRESS
 			}
-			if(menu_sel < menu_pos) {
-				menu_pos = menu_sel;
-			}
-			gui_paint(uSD, spi_screen, screen_buf);
+#endif
 		} else
 // Navigate the menu DOWN.
 		if(kbd_state & KBD_D_KEY) {
-			if((menu_sel < (menu_pos + (disp_dn_limit + 1) - disp_up_limit)) && menu_sel < items_scanned - 1) {
-				menu_sel++;
+#ifdef GUI_ACT_FUNC_ON_DN_BTN_PRESS
+			if(gui_redirect_dn_btn) {
+				GUI_ACT_FUNC_ON_DN_BTN_PRESS(uSD, spi_screen, screen_buf);
+			} else {
+#endif
+				if((menu_sel < (menu_pos + (disp_dn_limit + 1) - disp_up_limit)) && menu_sel < items_scanned - 1) {
+					menu_sel++;
+				}
+				if(menu_sel >= (menu_pos + (disp_dn_limit + 1) - disp_up_limit) && res == FR_OK) {
+					menu_pos++;
+				}
+				gui_paint(uSD, spi_screen, screen_buf);
+#ifdef GUI_ACT_FUNC_ON_UP_BTN_PRESS
 			}
-			if(menu_sel >= (menu_pos + (disp_dn_limit + 1) - disp_up_limit) && res == FR_OK) {
-				menu_pos++;
-			}
-			gui_paint(uSD, spi_screen, screen_buf);
+#endif
 		} else
 // Open the selected directory/file.
 		if(kbd_state & KBD_A_KEY) {
@@ -200,3 +218,7 @@ void gui_paint(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 		gui_print_status(spi_screen, screen_buf, PSTR("uSD not inserted..."), 0);
 	}
 }
+
+
+
+
