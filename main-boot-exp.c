@@ -22,11 +22,12 @@
 #include <avr/io.h>
 #include <stdint.h>
 #include <stdio.h>
+#include "def.h"
 #include "uart.h"
 #include "spi.h"
 #include "gui.h"
 #include "kbd.h"
-#include "device/ssd1306.h"
+#include DISPLAY_DRIVER_FILE
 #include "device/25flash.h"
 #include "mmc_sd_spi.h"
 #include "fat_fs/inc/ff.h"

@@ -22,9 +22,10 @@
 #ifndef GUI_H_
 #define GUI_H_
 
+#include "def.h"
 #include <avr/pgmspace.h>
 #include "mmc_sd_spi.h"
-#include "device/ssd1306.h"
+#include DISPLAY_DRIVER_FILE
 
 extern bool gui_redirect_up_btn;
 extern bool gui_redirect_dn_btn;
@@ -32,17 +33,25 @@ extern bool gui_redirect_dn_btn;
 inline void gui_print_status(spi_t *spi_screen, uint8_t *screen_buf, const char *text, uint8_t bar_len) {
 	char buf[32];
 	strcpy_P(buf, text);
-	ssd1306_clear(spi_screen, screen_buf, 0);
+#ifdef DISPLAY_FUNC_CLEAR
+	DISPLAY_FUNC_CLEAR(spi_screen, screen_buf, 0);
+#endif
 	if(bar_len) {
-		ssd1306_draw_rectangle(spi_screen, NULL, screen_buf, 0, 32, bar_len, 8, true, true);
+#ifdef DISPLAY_FUNC_DRAW_RECTANGLE
+		DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, 0, 32, bar_len, 8, true, true);
+#endif
 	}
-	ssd1306_draw_string(spi_screen, NULL, screen_buf, buf, 0, 8, false, false, 0, 1);
+#ifdef DISPLAY_FUNC_DRAW_STRING
+	DISPLAY_FUNC_DRAW_STRING(spi_screen, NULL, screen_buf, buf, 0, 8, false, false, 0, 1);
+#endif
 }
 
 inline void gui_draw_string(spi_t *spi_screen, uint8_t *screen_buf, const char *text, uint8_t x, uint8_t y) {
 	char buf[32];
 	strcpy_P(buf, text);
-	ssd1306_draw_string(spi_screen, NULL, screen_buf, buf, x, y, false, false, 0, 1);
+#ifdef DISPLAY_FUNC_DRAW_STRING
+	DISPLAY_FUNC_DRAW_STRING(spi_screen, NULL, screen_buf, buf, x, y, false, false, 0, 1);
+#endif
 }
 
 

@@ -194,7 +194,7 @@ void gui_paint(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 						}
 // Concatenate the file/directory name.
 						strcat(tmpNameBuff, fInfo.fname);
-						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, 0, ((menu_scan - menu_pos) + disp_up_limit) << 3, ssd1306_get_x(), 8, true, true);
+						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, 0, ((menu_scan - menu_pos) + disp_up_limit) << 3, DISPLAY_FUNC_GET_X(), 8, true, true);
 						DISPLAY_FUNC_DRAW_STRING(spi_screen, NULL, screen_buf, tmpNameBuff, 0, ((menu_scan - menu_pos) + disp_up_limit) << 3, false, false, 1, 0);
 					}
 					menu_scan++;
@@ -202,7 +202,7 @@ void gui_paint(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 			}
 // If there are less that eight lines to print on the display, fill the rest of the display with the background color.
 			for (uint16_t tmp_cnt = ((menu_scan - menu_pos) + disp_up_limit); tmp_cnt < (disp_dn_limit + 1); tmp_cnt++) {
-				DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, 0, tmp_cnt << 3, ssd1306_get_x(), 8, true, true);
+				DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, 0, tmp_cnt << 3, DISPLAY_FUNC_GET_X(), 8, true, true);
 			}
 		}
 		else {
