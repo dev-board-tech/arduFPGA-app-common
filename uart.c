@@ -51,19 +51,19 @@ void uart_init(uint32_t baud) {
 #endif
 }
 
-void uart_put_c(int8_t c) {
+void uart_put_c(uint8_t c) {
 #ifdef UCSR1A
 	/* Wait for empty transmit buffer */
 	while ( !( UCSR1A & (1<<UDRE1)) )
 	;
 	/* Put data into buffer, sends the data */
-	UDR1 = (uint8_t)c;
+	UDR1 = c;
 #elif defined (UCSR0A)
 	/* Wait for empty transmit buffer */
 	while ( !( UCSR0A & (1<<UDRE0)) )
 	;
 	/* Put data into buffer, sends the data */
-	UDR0 = (uint8_t)c;
+	UDR0 = c;
 #endif
 }
 
@@ -127,30 +127,32 @@ void uart_print_hex_long(uint32_t c) {
 int8_t uart_get_c() {
 #ifdef UCSR1A
 	/* Wait for data to be received */
-	while ( !(UCSR1A & (1<<RXC1)) )
-	;
+	while ( !(UCSR1A & (1<<RXC1)) );
 	/* Get and return received data from buffer */
 	return (int8_t)UDR1;
 #elif defined (UCSR0A)
 	/* Wait for data to be received */
-	while ( !(UCSR0A & (1<<RXC0)) )
-	;
+	while ( !(UCSR0A & (1<<RXC0)) );
 	/* Get and return received data from buffer */
 	return (int8_t)UDR0;
 #endif
 }
 
-int16_t uart_get_c_nb() {
+bool uart_get_c_nb(uint8_t *c) {
 #ifdef UCSR1A
 	if ( !(UCSR1A & (1<<RXC1)) )
-		return -1;
-	else
-		return (int16_t)UDR1;
+		return false;
+	else {
+		*c = UDR1;
+		return true;
+	}
 #elif defined (UCSR0A)
 	if ( !(UCSR0A & (1<<RXC0)) )
-	return -1;
-	else
-	return (int16_t)UDR0;
+		return false;
+	else {
+		*c = UDR0;
+		return true;
+	}
 #endif
 }
 

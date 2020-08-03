@@ -92,8 +92,8 @@ int main(void)
 	mmc_sd_spi_idle(&uSD);
 	kbd_init();
 	gui_init(&uSD, &spi, screen_buf);
-	//uart_init(115200);
-	//uart_put_s("Hello world!! \n\r");
+	uart_init(9600);
+	uart_put_s_P(PSTR("Hello world!! \n\r"));
     while (1) {
 		kbd_idle();
 		mmc_sd_spi_idle(&uSD);
@@ -102,9 +102,10 @@ int main(void)
 			gui_init(&uSD, &spi, screen_buf);
 		}
 		gui_idle(&uSD, &spi, screen_buf);
-		/*int16_t rx_c;
-		if((rx_c = uart_get_c_nb()) >= 0)
-			uart_put_c(rx_c);*/
+		uint8_t rx_c;
+		if(uart_get_c_nb(&rx_c)) {
+			uart_put_c(rx_c);
+		}
     }
 }
 

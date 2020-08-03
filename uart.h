@@ -24,8 +24,10 @@
 
 #include "def.h"
 
+#include "stdbool.h"
+
 void uart_init(uint32_t baud);
-void uart_put_c(int8_t c);
+void uart_put_c(uint8_t c);
 void uart_put_s(char *s);
 #if defined (__AVR_XMEGA__) || defined (__AVR_MEGA__)
 void uart_put_s_P(const char *s);
@@ -37,6 +39,6 @@ void uart_print_hex_char(uint8_t c);
 void uart_print_hex_short(uint16_t c);
 void uart_print_hex_long(uint32_t c);
 int8_t uart_get_c();
-int16_t uart_get_c_nb();
+bool uart_get_c_nb(uint8_t *c);
 
 #endif /* UART_H_ */
