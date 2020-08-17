@@ -22,9 +22,8 @@
 #include <stdio.h>
 #include <avr/pgmspace.h>
 #include "delay.h"
-#include "def.h"
-#include "ssd1306.h"
 #include "spi.h"
+#include "ssd1306.h"
 
 #if __AVR_MEGA__
 #include <avr/pgmspace.h>
@@ -197,7 +196,7 @@ void ssd1306_draw_rectangle(spi_t *inst, box_t *box, uint8_t *buf, int16_t x, in
 				return;
 			register int16_t x = _x_start;
 			for( ; x < _x_end ; x++) {
-				ssd1306_put_pixel(inst, &box__, buf, x, LineCnt, state);
+				ssd1306_draw_pixel(inst, &box__, buf, x, LineCnt, state);
 			}
 		}
 #else
@@ -283,7 +282,7 @@ void ssd1306_draw_h_line(spi_t *inst, box_t *box, uint8_t *buf, int16_t x1, int1
 	if(X2_Tmp >= (int16_t)box__.x_max)
 		X2_Tmp = (int16_t)box__.x_max;
 	if(y < (int16_t)box__.y_min)
-		y = (int16_t)box__->y_min;
+		y = (int16_t)box__.y_min;
 	if(y >= (int16_t)box__.y_max)
 		y = (int16_t)box__.y_max;
 	int16_t Half_width1 = (width>>1);

@@ -42,7 +42,7 @@ volatile uint8_t led_color = 0;
 volatile uint8_t debug_char_in_cnt = 0;
 volatile uint8_t volume;
 volatile int8_t debug_char_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-
+	
 spi_t spi;
 uint8_t screen_buf[1];
 _25flash_t flash_des;
@@ -213,21 +213,35 @@ void ram_backup() {
 	}
 }
 
+void eep_load () {
+	/* Load the EEPROM size. */
+	//_25flash_read(&flash_des, FLASH_APP_USER_START_ADDR + FLASH_APP_MEMORY_SIZES_OFFSET + FLASH_APP_EEP_OFFSET, flash_buf, 4);
+	//uint32_t eep_size = (uint32_t)flash_buf[3] << 24 | (uint32_t)flash_buf[2] << 16 | (uint32_t)flash_buf[1] << 8 | (uint32_t)flash_buf[0];
+	/* Protect against empty FLASH */
+	/*if(eep_size > FLASH_APP_EEP_SIZE) {
+		eep_size = EEP_SIZE;
+	}*/
+	for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt += 0x100) {
+		_25flash_read(&flash_des, FLASH_APP_USER_START_ADDR + FLASH_APP_EEP_OFFSET + cnt, flash_buf, 0x100);
+		eeprom_write_block(flash_buf, (void *)cnt, 0x100);
+	}
+}
+
 void flash_load (uint32_t flash_app_addr) {
 	F_CNT_L = 0;
 	F_CNT_H = 0;
 
 	PORTB = (PORTB & 0b00011111) | LED_R;
 	/* Load the APP size. */
-	_25flash_read(&flash_des, flash_app_addr + FLASH_APP_MEMORY_SIZES_OFFSET + FLASH_APP_MEMORY_SIZES_PGM_OFFSET, flash_buf, 4);
-	uint32_t app_size = (uint32_t)flash_buf[3] << 24 | (uint32_t)flash_buf[2] << 16 | (uint32_t)flash_buf[1] << 8 | (uint32_t)flash_buf[0];
+	//_25flash_read(&flash_des, flash_app_addr + FLASH_APP_MEMORY_SIZES_OFFSET + FLASH_APP_MEMORY_SIZES_PGM_OFFSET, flash_buf, 4);
+	//uint32_t app_size = (uint32_t)flash_buf[3] << 24 | (uint32_t)flash_buf[2] << 16 | (uint32_t)flash_buf[1] << 8 | (uint32_t)flash_buf[0];
 	/* Protect against empty FLASH */
-	if(app_size > 0x1E000) {
+	/*if(app_size > 0x1E000) {
 		app_size = 0x8000;
-	}
+	}*/
 	/* Load the APP from selected flash section. */
 	BOOT_STAT |= BOOT_STAT_APP_PGM_WR_EN;
-	for (uint32_t cnt = flash_app_addr; cnt < flash_app_addr + app_size; cnt += 2) {
+	for (uint32_t cnt = flash_app_addr; cnt < flash_app_addr + FLASH_SIZE; cnt += 2) {
 		if(!(cnt & 0x00FF)) {
 			_25flash_read(&flash_des, cnt, flash_buf, 0x100);
 		}
@@ -246,8 +260,8 @@ void init() {
 	"rjmp main \n\t"
 	"rjmp _set_serv_addr \n\t"
 	"rjmp _flash_write \n\t"
-	"rjmp _flash_des_erase \n\t"
-	"rjmp _flash_des_write \n\t"
+	//"rjmp _flash_des_erase \n\t"
+	//"rjmp _flash_des_write \n\t"
 	"_init: \n\t"
 	"cli \n\t"
 	"eor	r1, r1 \n\t"
@@ -260,6 +274,7 @@ void init() {
 
 int main(void)
 {
+	BOOT_STAT &= ~BOOT_STAT_NMI_INT_ENABLE;
 	service_Ptr = NULL;
 	BOOT_STAT |= BOOT_STAT_IO_RST;
 	asm("nop");
@@ -297,17 +312,16 @@ int main(void)
 	}
 
 #ifdef POWER_UP_WITH_USER_APP	
-// If at power UP the L button is pressed will skip loading the user application, will load the GUI boot-loader.
+// If at power UP the INT button is pressed will skip loading the user application, will load the GUI boot-loader.
 // If in the user application is something wrong and freezes the core, user has a way to avoid loading the APP and load the GUI boot-loader instead.
 	if(KBD_IN & KBD_INT_PIN) {
-		_25flash_read(&flash_des, FLASH_APP_USER_START_ADDR, flash_buf, 4);
 // After power UP check if a user application is written in the FLASH, if not, proceed with launching the explorer.
 		if(after_power_up) {
 			after_power_up = false;
+			_25flash_read(&flash_des, FLASH_APP_USER_START_ADDR, flash_buf, 4);
 			if((flash_buf[0] != 0xFF || flash_buf[1] != 0xFF || flash_buf[2] != 0xFF || flash_buf[3] != 0xFF)) {
-				BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING;
 				BOOT_STAT |= BOOT_STAT_FLASH_APP_NR;
-				//flash_app_addr = FLASH_APP_USER_START_ADDR;
+				flash_app_addr = FLASH_APP_USER_START_ADDR;
 			}
 		}
 	}
@@ -315,7 +329,15 @@ int main(void)
 	
 	flash_load(flash_app_addr);
 	
-	asm("sei");
+	if(BOOT_STAT & BOOT_STAT_FLASH_APP_NR) {
+		eep_load();
+		BOOT_STAT |= BOOT_STAT_NMI_INT_ENABLE;
+		sei();
+	} else {
+		BOOT_STAT &= ~BOOT_STAT_NMI_INT_ENABLE;
+	}
+	uart_init(115200);
+	uart_put_s("arduFPGA iCE40UP5k (morgoth@devboard.tech) \n\r");
 	asm("jmp 0x0000");
 }
 
@@ -351,15 +373,15 @@ void char_received(int8_t c) {
 	if(c == 0x08 && debug_char_buf != 0) {
 		debug_char_in_cnt--;
 		uart_put_c(0x08);
-		} else {
+	} else {
 		if(debug_char_in_cnt < sizeof(debug_char_buf)) {
 			debug_char_buf[debug_char_in_cnt] = c;
 			uart_put_c(debug_char_buf[debug_char_in_cnt]);
 			debug_char_in_cnt++;
-			}
+		}
 		if(c == 0x0a || c == 0x0d) {
-			if(debug_char_in_cnt >= 5 && !strcmp((char *)debug_char_buf, "DUMP")) {
-				uint8_t *ptr = (uint8_t *)uni_8_to_16(atoi((char *)debug_char_buf + 5), 0);
+			if(debug_char_in_cnt >= 5 && !strncmp((char *)debug_char_buf, "DUMP", 4)) {
+				uint8_t *ptr = (uint8_t *)uni_8_to_16(atoi((char *)debug_char_buf + 4), 0);
 				uint16_t cnt = 0;
 				for (; cnt < 256; cnt++) {
 #ifndef DEBUG_BINARY
@@ -370,7 +392,9 @@ void char_received(int8_t c) {
 					uart_put_s("  BIN VAL: 0b");
 					uart_print_bin_char(ptr[cnt]);
 					uart_put_s("  ASCII VAL: ");
-					uart_put_c(ptr[cnt]);
+					if(ptr[cnt] >= 32 && ptr[cnt] < 127) {
+						uart_put_c(ptr[cnt]);
+					}
 					uart_put_s("\n\r");
 #else
 					uart_put_c(ptr[cnt]);
@@ -394,23 +418,21 @@ void _int(void) {
 		service_Ptr();
 	}
 #ifdef DEBUG_ENABLE
-	if(BOOT_STAT & BOOT_STAT_DEBUG_EN) {
-		int16_t c;
-		c = uart_get_c_nb();
-		if(c != -1) {
-			char_received((uint8_t) c);
+	//if(BOOT_STAT & BOOT_STAT_DEBUG_EN) {
+		uint8_t c;
+		if(uart_get_c_nb(&c)) {
+			char_received(c);
 		}
-	}
+	//}
 #endif
 	if(KBD_IN & KBD_INT_PIN) {
 /*
- * Load GUI boot-loader only if user APP is running, if INTERRUPT button is press less than 1 second.
+ * Load GUI boot-loader only if user APP is running, if INTERRUPT button is press between 100 and 500 mS.
  */
-		if(cnt_int_key_k > 100 && cnt_int_key_k < 500 && BOOT_STAT & BOOT_STAT_USR_APP_RUNNING) {
-			BOOT_STAT &= ~BOOT_STAT_USR_APP_RUNNING;
+		if(cnt_int_key_k > 100 && cnt_int_key_k < 500 && BOOT_STAT & BOOT_STAT_FLASH_APP_NR) {
+			cnt_int_key_k = 0;
 			BOOT_STAT &= ~BOOT_STAT_FLASH_APP_NR;
 			led_color = 0;
-			asm("sei");
 			main();
 		}
 		cnt_int_key_k = 0;

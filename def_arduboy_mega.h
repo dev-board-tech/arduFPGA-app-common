@@ -1,7 +1,7 @@
 /*
  * def_arduboy_mega.h
  *
- * Created: 19.06.2020 09:37:58
+ * For anyone to change it as he wish.
  *  Author: MorgothCreator
  */ 
 
@@ -9,22 +9,22 @@
 #ifndef DEF_ARDUBOY_MEGA_H_
 #define DEF_ARDUBOY_MEGA_H_
 
-#define F_CPU	16000000
-#define FLASH_SIZE					0x8000
-#define EEP_SIZE					0x400
-#define RAM_SIZE					0xA00
+#define F_CPU								16000000
+#define FLASH_SIZE							0x8000
+#define EEP_SIZE							0x400
+#define RAM_SIZE							0xA00
 
 
 /*
  This ports does not exist in the original micro controller.
  This ports are used by boot loader, but can be used even by the application.
  */
-#define PINA						_SFR_IO8(0x00)
-#define DDRA						_SFR_IO8(0x01)
-#define PORTA						_SFR_IO8(0x02)
+#define PINA								_SFR_IO8(0x00)
+#define DDRA								_SFR_IO8(0x01)
+#define PORTA								_SFR_IO8(0x02)
 
-#define FLASH_APP_EXPLORER_START_ADDR	0x100000
-#define FLASH_APP_USER_START_ADDR		0x140000
+#define FLASH_APP_EXPLORER_START_ADDR		0x100000
+#define FLASH_APP_USER_START_ADDR			0x140000
 
 #define FLASH_APP_ROM_OFFSET				0x00000
 #define FLASH_APP_ROM_ZIZE					0x20000
@@ -39,25 +39,25 @@
 #define FLASH_APP_MEMORY_SIZES_EEP_OFFSET	0xC
 
 /* These IO's are placed in SRAM data space, we need to subtract 0x20 value to address them correctly. */
-#define SEC_REG_ADDR				_SFR_IO8(0xD8)
-#define F_CNT_L						_SFR_IO8(0xDB)
-#define F_CNT_H						_SFR_IO8(0xDC)
-#define F_DATA_L					_SFR_IO8(0xDD)
-#define F_DATA_H					_SFR_IO8(0xDE)
-#define BOOT_STAT					_SFR_IO8(0xDF)
+#define SEC_REG_ADDR						_SFR_IO8(0xD8)
+#define F_CNT_L								_SFR_IO8(0xDB)
+#define F_CNT_H								_SFR_IO8(0xDC)
+#define F_DATA_L							_SFR_IO8(0xDD)
+#define F_DATA_H							_SFR_IO8(0xDE)
+#define BOOT_STAT							_SFR_IO8(0xDF)
 
-#define BOOT_STAT_FLASH_APP_NR		(1 << 0)
-#define BOOT_STAT_EEP_EDITED		(1 << 1)
-#define BOOT_STAT_USR_APP_RUNNING	(1 << 2)
-#define BOOT_STAT_APP_PGM_WR_EN		(1 << 3)
-#define BOOT_STAT_IO_RST			(1 << 4)
-#define BOOT_STAT_DEBUG_EN			(1 << 7)
+#define BOOT_STAT_FLASH_APP_NR				(1 << 0)
+#define BOOT_STAT_EEP_EDITED				(1 << 1)
+#define BOOT_STAT_NMI_INT_ENABLE			(1 << 2)
+#define BOOT_STAT_APP_PGM_WR_EN				(1 << 3)
+#define BOOT_STAT_IO_RST					(1 << 4)
+#define BOOT_STAT_DEBUG_EN					(1 << 7)
 
-#define BOOT_VECTOR_MAIN			(0xFC02)
-#define BOOT_VECTOR_SET_SERVICE_VECT	(0xFC03)
-#define BOOT_VECTOR_FLASH_WRITE		(0xFC04)
-#define BOOT_VECTOR_FLASH_DES_ERASE	(0xFC05)
-#define BOOT_VECTOR_FLASH_DES_WRITE	(0xFC06)
+#define BOOT_VECTOR_MAIN					(0x7802)
+#define BOOT_VECTOR_SET_SERVICE_VECT		(0x7803)
+#define BOOT_VECTOR_FLASH_WRITE				(0x7804)
+#define BOOT_VECTOR_FLASH_DES_ERASE			(0x7805)
+#define BOOT_VECTOR_FLASH_DES_WRITE			(0x7806)
 
 #define KBD_DIR						DDRA
 #define KBD_PORT					PORTA
@@ -83,19 +83,19 @@
 #define KBD_A_IN					PINA
 #define KBD_A_PIN					(1<<4)
 
-#define KBD_A_DIR					DDRA
-#define KBD_A_PORT					PORTA
-#define KBD_A_IN					PINA
+#define KBD_INT_DIR					DDRA
+#define KBD_INT_PORT				PORTA
+#define KBD_INT_IN					PINA
 #define KBD_INT_PIN					(1<<3)
 
-#define KBD_A_DIR					DDRA
-#define KBD_A_PORT					PORTA
-#define KBD_A_IN					PINA
+#define KBD_L_DIR					DDRA
+#define KBD_L_PORT					PORTA
+#define KBD_L_IN					PINA
 #define KBD_L_PIN					(1<<2)
 
-#define KBD_A_DIR					DDRA
-#define KBD_A_PORT					PORTA
-#define KBD_A_IN					PINA
+#define KBD_R_DIR					DDRA
+#define KBD_R_PORT					PORTA
+#define KBD_R_IN					PINA
 #define KBD_R_PIN					(1<<1)
 
 #define LED_B						0b00100000

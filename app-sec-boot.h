@@ -43,7 +43,6 @@ extern FILINFO fInfo;
 extern FIL filObject;
 extern _25flash_t flash_des;
 //extern _25flash_t flash_app;
-extern const char design_update_err_message[];
 extern char nameBuff[];
 extern bool gui_initialized;
 
@@ -267,12 +266,12 @@ void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 			}
 			// Wait 1000ms to be able to read the message on the display.
 			delay_ms(1000);
-			BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING;
-			BOOT_STAT |= BOOT_STAT_FLASH_APP_NR;
+			//BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING;
 			if(!des_updated){
 				//Turn OFF the display, maybe the loaded application does not need him, if it use it, it will need to turn it ON.
 				ssd1306_on(spi_screen, false);
 				// Jump to the first stage boot loader, to launch the loaded APP.
+				BOOT_STAT |= BOOT_STAT_FLASH_APP_NR;
 				void (*vect_main)(void) = (void *)BOOT_VECTOR_MAIN;
 				vect_main();
 			} else {
@@ -312,13 +311,19 @@ void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 		if(f_open(&filObject, nameBuff, FA_READ) == FR_OK) {
 			//fsize = f_size(&filObject);
 			//fsize = fsize & (FLASH_APP_EEP_SIZE - 1);
+			_24flash_write_status(&flash_des, 0x80);
+			for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt += 0x1000) {
+				_25flash_erase(&flash_des, FLASH_APP_USER_START_ADDR + FLASH_APP_EEP_OFFSET + cnt);
+			}
 			for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt+= 0x40) {
 				if(f_read(&filObject, flash_buf, 0x40, &b_read) == FR_OK) {
+					_25flash_write(&flash_des, FLASH_APP_USER_START_ADDR + FLASH_APP_EEP_OFFSET + cnt, flash_buf, 0x40);
 					eeprom_write_block(flash_buf, (void *)cnt, 0x40);
 					} else {
 					break;
 				}
 			}
+			_24flash_write_status(&flash_des, 0xBC);
 			f_close(&filObject);
 		}
 		// Save the current loaded APP path, including APP name and extension, into the root directory "current.txt" file.
@@ -349,14 +354,14 @@ void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 		gui_print_status(spi_screen, screen_buf, PSTR("DONE"), 128);
 		// Wait 1000ms to be able to read the message on the display.
 		delay_ms(1000);
-		BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING;
-		BOOT_STAT |= BOOT_STAT_FLASH_APP_NR;
+		//BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING;
 		// Jump to the first stage bootloader.
 		if(!des_updated){
 			//Turn OFF the display, maybe the loaded application does not need him, if it use it, it will need to turn it ON.
 			ssd1306_on(spi_screen, false);
 			// Jump to the first stage boot loader, to launch the loaded APP.
 			//asm("jmp 0x1f804");
+			BOOT_STAT |= BOOT_STAT_FLASH_APP_NR;
 			void (*vect_main)(void) = (void *)BOOT_VECTOR_MAIN;
 			vect_main();
 		} else {
@@ -405,13 +410,10 @@ void app_card_inserted(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 					/*****************************************/
 					// Check if EEPROM was edited.
 					/*****************************************/
-					// If EEPROM was edited then the explorer was oppened after a user application was interrupted, if EEPROM was not edited then the explorer is opened after a user application was interrupted or after a power up (no need to save EEPROM to uSD).
-					if(fallow_ok) {
-						/*if(BOOT_STAT & BOOT_STAT |= BOOT_STAT_USR_APP_RUNNING) {
-							
-						} else*/
-						if(BOOT_STAT & BOOT_STAT_EEP_EDITED) {
-							BOOT_STAT &= ~BOOT_STAT_EEP_EDITED;
+					// If EEPROM was edited then the explorer was opened after a user application was interrupted, if EEPROM was not edited then the explorer is opened after a user application was interrupted or after a power up (no need to save EEPROM to uSD).
+					if(BOOT_STAT & BOOT_STAT_EEP_EDITED) {
+						//BOOT_STAT &= ~BOOT_STAT_EEP_EDITED;
+						if(fallow_ok) {
 							// Check if the path was successfully fallow.
 							util_fat_change_extension(filename, filename, PSTR("eep"));
 							bool eep_different = false;
@@ -461,6 +463,30 @@ void app_card_inserted(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 				/*****************************************/
 				// !Read the last opened application path.
 				/*****************************************/
+			}
+			if(BOOT_STAT & BOOT_STAT_EEP_EDITED) {
+				BOOT_STAT &= ~BOOT_STAT_EEP_EDITED;
+				bool eep_different = false;
+				// We do not want to wear out the FLASH memory with the same data, check if the emulated EEPROM content is different than the FLASH content.
+				for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt += 0x20) {
+					eeprom_read_block(buf + 0x20, (void *)cnt, 0x20);
+					_25flash_read(&flash_des, FLASH_APP_USER_START_ADDR + FLASH_APP_EEP_OFFSET + cnt, buf, 0x20);
+					if(memcmp(buf + 0x20, buf, 0x20)) {
+						eep_different = true;
+						break;
+					}
+				}
+				if(eep_different) {
+					_24flash_write_status(&flash_des, 0x80);
+					for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt += 0x1000) {
+						_25flash_erase(&flash_des, FLASH_APP_USER_START_ADDR + FLASH_APP_EEP_OFFSET + cnt);
+					}
+					for (uint16_t cnt = 0; cnt < EEP_SIZE; cnt += 0x40) {
+						eeprom_read_block(buf, (void *)cnt, 0x40);
+						_25flash_write(&flash_des, FLASH_APP_USER_START_ADDR + FLASH_APP_EEP_OFFSET + cnt, buf, 0x40);
+					}
+					_24flash_write_status(&flash_des, 0xBC);
+				}
 			}
 		}
 	}

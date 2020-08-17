@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include "def.h"
 #include "spi.h"
+#include "gfx/draw.h"
 #define _depth 1
 
 #define PI (3.14159265358979323846264338327950288)
@@ -32,11 +33,30 @@
 
 
 
-//typedef struct
-//{
-//	s32 _x;
-//	s32 _y;
-//}theScene;
+typedef struct {
+	int16_t x;
+	int16_t y;
+	int16_t depth;
+	int16_t scaleFactor;
+}_2d_point_i;
+
+typedef struct {
+	int32_t *x;
+	int32_t *y;
+	int32_t *z;
+	int32_t *depth;
+	int32_t *scaleFactor;
+	int32_t focalLength;
+	int32_t depthScale;
+	uint16_t length;
+}_3d_points_i;
+
+typedef struct 
+{
+	uint16_t x;
+	uint16_t y;
+	uint16_t z;
+}axisRotations_i;
 
 typedef struct
 {
@@ -74,9 +94,10 @@ typedef struct
 	point points[8];
 }Transformed_Points_Array;
 
-void Transform3DPointsTo2DPoints(_3d_points *screenPoints, _3d_points *Points, axisRotations AxisRotations);
-void put_3d_triangle(spi_t *inst, box_t *box, uint8_t *buf, _3d_points *Points, int32_t X_offset, int32_t Y_offset, double X_Angle, double Y_Angle, double Z_Angle, uint32_t Color);
-void put_3d_rectangle(spi_t *inst, box_t *box, uint8_t *buf, _3d_points *Points, int32_t X_offset, int32_t Y_offset, double X_Angle, double Y_Angle, double Z_Angle, uint32_t Color);
+void lib_3ds_3DPointsTo2DPoints(_3d_points *screenPoints, _3d_points *Points, axisRotations AxisRotations);
+void lib_3ds_draw_triangle(spi_t *inst, box_t *box, uint8_t *buf, _3d_points *Points, int32_t X_offset, int32_t Y_offset, double X_Angle, double Y_Angle, double Z_Angle, uint32_t Color);
+void lib_3ds_draw_triangle_i(spi_t *inst, box_t *box, uint8_t *buf, _3d_points_i *Points, int16_t X_offset, int16_t Y_offset, uint16_t X_Angle, uint16_t Y_Angle, uint16_t Z_Angle, uint32_t color);
+void lib_3ds_draw_rectangle(spi_t *inst, box_t *box, uint8_t *buf, _3d_points *Points, int32_t X_offset, int32_t Y_offset, double X_Angle, double Y_Angle, double Z_Angle, uint32_t Color);
 
 //#######################################################################################
 #ifdef USE_VISUAL_STUDIO
