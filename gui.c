@@ -31,8 +31,6 @@
 #include "kbd.h"
 #include GUI_APP_FILE_INCLUDE
 
-#define FILENAME_MAX_LEN		32
-
 uint8_t disp_up_limit = GUI_UPPER_LIMIT_ROW;
 uint8_t disp_dn_limit = GUI_LOWER_LIMIT_ROW;
 uint16_t menu_pos = 0;
@@ -44,7 +42,7 @@ uint16_t items_scanned = 0;
 static const char* const str[] = {_VOLUME_STRS};
 FRESULT res = FR_OK;
 uint8_t fattrib = 0;
-char nameBuff[FILENAME_MAX_LEN];
+char nameBuff[MAX_ALLOWED_FILE_NAME_LEN_BUF];
 extern DIR dirObject;
 extern FILINFO fInfo;
 extern FIL filObject;
@@ -60,20 +58,26 @@ void gui_init(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 	kbd_init();
 	gui_idle(uSD, spi_screen, screen_buf);
 	gui_paint(uSD, spi_screen, screen_buf);
+#ifdef GUI_ACT_FUNC_ON_INIT
+	GUI_ACT_FUNC_ON_INIT(uSD, spi_screen, screen_buf);
+#endif
 }
 
 void gui_idle(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 // Check if the FS is mounted, if it is, open the root directory.
 	if(uSD->fs_mounted != fs_mounted && uSD->fs_mounted) {
 		fs_mounted = true;
-#ifdef GUI_ACT_FUNC_AT_uSD_INSERT
-		GUI_ACT_FUNC_AT_uSD_INSERT(uSD, spi_screen, screen_buf);
+#ifdef GUI_ACT_FUNC_ON_FS_MOUNTED
+		GUI_ACT_FUNC_ON_FS_MOUNTED(uSD, spi_screen, screen_buf);
 #endif
 	} else {
 		if(uSD->fs_mounted != fs_mounted && ~uSD->fs_mounted) {
 			fs_mounted = false;
 		}
 	}
+#ifdef GUI_ACT_FUNC_ON_IDLE
+	GUI_ACT_FUNC_ON_IDLE(uSD, fs_mounted, spi_screen, screen_buf);
+#endif
 	kbd_idle();
 	if(kbd_changed()) {
 		uint8_t kbd_state = kbd_get();
@@ -125,35 +129,33 @@ void gui_idle(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 					gui_paint(uSD, spi_screen, screen_buf);
 				}
 			} else {
-//Open selected file and load it.
+//Open selected file.
 				path_sel_cnt = path_cnt;
 #ifdef GUI_ACT_FUNC_ON_FILE_SELECT
 				GUI_ACT_FUNC_ON_FILE_SELECT(uSD, spi_screen, screen_buf);
 #endif
 				gui_paint(uSD, spi_screen, screen_buf);
 			}
-		} else
-		if(kbd_state & KBD_B_KEY) {
+		} else if(kbd_state & KBD_B_KEY) {
+// Go to parent directory.
 			f_opendir(&dirObject, "..");
 			f_chdir("..");
 			menu_pos = 0;
 			menu_sel = 0;
 			path_cnt--;
 			gui_paint(uSD, spi_screen, screen_buf);
-		} else
-		if(kbd_state & KBD_L_KEY) {
+		} else if(kbd_state & KBD_L_KEY) {
 #ifdef GUI_ACT_FUNC_ON_LEFT_BTN_PRESS
 			GUI_ACT_FUNC_ON_LEFT_BTN_PRESS(uSD, spi_screen, screen_buf);
 #endif
-		} else
-		if(kbd_state & KBD_R_KEY) {
+		} else if(kbd_state & KBD_R_KEY) {
 #ifdef GUI_ACT_FUNC_ON_RIGHT_BTN_PRESS
 			GUI_ACT_FUNC_ON_RIGHT_BTN_PRESS(uSD, spi_screen, screen_buf);
 #endif
 		}
 	}
 }
-
+// Check selected file extension against a table with extensions, if is found will return true.
 bool gui_is_extension(char *ext) {
 	uint8_t cnt = 0;
 	for(cnt = 0; cnt < sizeof(file_ext_filter) / sizeof(file_ext_filter[0]); cnt++) {
@@ -184,14 +186,18 @@ void gui_paint(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 					if(menu_scan >= menu_pos && menu_scan < menu_pos +  (disp_dn_limit + 1) - disp_up_limit) {
 						if(menu_scan == menu_sel) {
 							fattrib = fInfo.fattrib;
-							strncpy(nameBuff, fInfo.fname, FILENAME_MAX_LEN);
+							strncpy(nameBuff, fInfo.fname, MAX_ALLOWED_FILE_NAME_LEN_BUF);
 						}
 // Check and print the selected line.
-						if(file_checked == -1)
+						if(file_checked != -1)
+// This is utile for players, will display an '*' on selected/current playing file.
 							strcpy(tmpNameBuff, menu_scan == menu_sel ? ">":(menu_scan == file_checked && path_sel_cnt == path_cnt ? "*":"  "));
 						else {
 							strcpy(tmpNameBuff, menu_scan == menu_sel ? ">":"  ");
 						}
+#ifdef GUI_ACT_FUNC_ON_IDLE
+						GUI_ACT_FUNC_ON_IDLE(uSD, fs_mounted, spi_screen, screen_buf);
+#endif
 // Concatenate the file/directory name.
 						strcat(tmpNameBuff, fInfo.fname);
 						DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, 0, ((menu_scan - menu_pos) + disp_up_limit) << 3, DISPLAY_FUNC_GET_X(), 8, true, true);
@@ -203,6 +209,9 @@ void gui_paint(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 // If there are less that eight lines to print on the display, fill the rest of the display with the background color.
 			for (uint16_t tmp_cnt = ((menu_scan - menu_pos) + disp_up_limit); tmp_cnt < (disp_dn_limit + 1); tmp_cnt++) {
 				DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, 0, tmp_cnt << 3, DISPLAY_FUNC_GET_X(), 8, true, true);
+#ifdef GUI_ACT_FUNC_ON_IDLE
+				GUI_ACT_FUNC_ON_IDLE(uSD, fs_mounted, spi_screen, screen_buf);
+#endif
 			}
 		}
 		else {

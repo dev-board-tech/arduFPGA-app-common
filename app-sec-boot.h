@@ -373,7 +373,8 @@ void app_app_load(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 	} 
 }
 
-void app_card_inserted(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
+void app_fs_mounted(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
+	f_closedir(&dirObject);
 	if(f_opendir(&dirObject, "/") == FR_OK) {
 		f_chdir("/");
 		if(!gui_initialized) {
