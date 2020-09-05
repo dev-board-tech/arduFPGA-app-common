@@ -237,6 +237,14 @@
 #define DISC_USR_KBD_PIN_bp			(4)
 #define DISC_USR_KBD_PIN_bm			(1 << DISC_USR_KBD_PIN_bp)
 
+#define USB_NTSC_EN_PORT			PORTA
+#define USB_NTSC_EN_PORT_bp			(5)
+#define USB_NTSC_EN_PORT_bm			(1 << USB_NTSC_EN_PORT_bp)
+
+#define AUD_NTSC_EN_PORT			PORTA
+#define AUD_NTSC_EN_PORT_bp			(6)
+#define AUD_NTSC_EN_PORT_bm			(1 << AUD_NTSC_EN_PORT_bp)
+
 /*******************************************/
 typedef struct {
 	int16_t x_min;

@@ -41,6 +41,8 @@ uint8_t flash_buf[256];
 volatile uint8_t led_color = 0;
 volatile uint8_t debug_char_in_cnt = 0;
 volatile uint8_t volume;
+volatile bool usb_function_ntsc_out = false;
+volatile bool aud_function_ntsc_out = false;
 volatile int8_t debug_char_buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 	
 spi_t spi;
@@ -280,7 +282,7 @@ int main(void)
 	asm("nop");
 	BOOT_STAT &= ~BOOT_STAT_IO_RST;
 	
-    DDRA = 0b00011111;
+    DDRA = 0b01111111;
 	DDRB = 0b11100000;
     PORTB |= 0b11100000;
     
@@ -461,7 +463,7 @@ void _int(void) {
 						led_color = LED_B;
 					}
 					PORTB = (PORTB & 0b00011111) | led_color;
-				} else if(~tmp_kbd & KBD_A_PIN){
+				} else if(~tmp_kbd & KBD_A_PIN) {
 					pushed &= ~KBD_A_PIN;
 					led_color = 0;
 					PORTB = (PORTB & 0b00011111) | (PORTB & (LED_R | LED_G | LED_B) ?  0 : LED_R | LED_G | LED_B);
@@ -480,6 +482,30 @@ void _int(void) {
 					pushed &= ~KBD_D_PIN;
 					if((PWM_VOLUME_PORT & PWM_VOLIME_PIN_gm) != PWM_VOLIME_PIN_gm) {
 						PWM_VOLUME_PORT = (PWM_VOLUME_PORT & ~PWM_VOLIME_PIN_gm) | ((PWM_VOLUME_PORT + (1 << PWM_VOLIME_PIN_gp)) & PWM_VOLIME_PIN_gm);
+					}
+				} else if(~tmp_kbd & KBD_L_PIN) {
+/*
+ * Select USB connector function.
+ */
+					pushed &= ~KBD_L_PIN;
+					if(usb_function_ntsc_out) {
+						USB_NTSC_EN_PORT &= ~USB_NTSC_EN_PORT_bm;
+						usb_function_ntsc_out = false;
+					} else {
+						USB_NTSC_EN_PORT |= USB_NTSC_EN_PORT_bm;
+						usb_function_ntsc_out = true;
+					}
+				} else if(~tmp_kbd & KBD_R_PIN) {
+/*
+ * Select Audio connector function.
+ */
+					pushed &= ~KBD_R_PIN;
+					if(aud_function_ntsc_out) {
+						AUD_NTSC_EN_PORT &= ~AUD_NTSC_EN_PORT_bm;
+						aud_function_ntsc_out = false;
+					} else {
+						AUD_NTSC_EN_PORT |= AUD_NTSC_EN_PORT_bm;
+						aud_function_ntsc_out = true;
 					}
 				}
 			}
