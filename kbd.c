@@ -26,7 +26,8 @@ uint8_t state = 0;
 uint8_t last_state = 0;
 
 void kbd_init() {
-#ifdef KBD_L_IN
+//We do not use KBD PORT setup because is PORTA and this PORT has outputs with different functions than inputs, so we need to let PORTA how was configured in the design at reset time.
+/*#ifdef KBD_L_IN
 	KBD_L_DIR &= ~KBD_L_PIN;
 	KBD_L_PORT |= KBD_L_PIN;
 #endif
@@ -49,7 +50,7 @@ void kbd_init() {
 #ifdef KBD_B_IN
 	KBD_B_DIR &= ~KBD_B_PIN;
 	KBD_B_PORT |= KBD_B_PIN;
-#endif
+#endif*/
 }
 
 void kbd_idle() {

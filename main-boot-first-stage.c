@@ -282,7 +282,6 @@ int main(void)
 	asm("nop");
 	BOOT_STAT &= ~BOOT_STAT_IO_RST;
 	
-    DDRA = 0b01111111;
 	DDRB = 0b11100000;
     PORTB |= 0b11100000;
     
