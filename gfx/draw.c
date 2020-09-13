@@ -18,7 +18,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <string.h>
+#include <stdlib.h>
 #include "draw.h"
+#include "util.h"
 #include DISPLAY_DRIVER_FILE
 
 
@@ -607,5 +610,55 @@ void draw_triangle(spi_t *inst, box_t *box, uint8_t *buf, signed int  ax,signed 
 			ex += dx2;
 		}
 	}
+}
+
+void draw_msg_and_progress(spi_t *spi_screen, uint8_t *screen_buf, const char *text_P, char *text_R, int32_t progress_min, int32_t progress_max, int32_t progress_value) {
+	
+	char *buf = NULL;
+	if(text_P) {
+		buf = (char *)malloc(strlen_P(text_P) + 1);
+		if(!buf) {
+			return;
+		}
+		strcpy_P(buf, text_P);
+	} else if(text_R) {
+		buf = text_R;
+	} else {
+		return;
+	}
+	
+	int32_t bar_len = util_int_to_percent(DISPLAY_FUNC_GET_X(), progress_min, progress_max, progress_value);
+#ifdef DISPLAY_FUNC_CLEAR
+	DISPLAY_FUNC_CLEAR(spi_screen, screen_buf, 0);
+#endif
+	if(bar_len) {
+#ifdef DISPLAY_FUNC_DRAW_RECTANGLE
+		DISPLAY_FUNC_DRAW_RECTANGLE(spi_screen, NULL, screen_buf, 0, 32, bar_len, 8, true, true);
+#endif
+	}
+#ifdef DISPLAY_FUNC_DRAW_STRING
+	DISPLAY_FUNC_DRAW_STRING(spi_screen, NULL, screen_buf, buf, 0, 8, false, false, 0, 1);
+#endif
+}
+
+void draw_msg(spi_t *spi_screen, uint8_t *screen_buf, const char *text_P, char *text_R, uint8_t x, uint8_t y) {
+	char *buf = NULL;
+	if(text_P) {
+		buf = (char *)malloc(strlen_P(text_P) + 1);
+		if(!buf) {
+			return;
+		}
+		strcpy_P(buf, text_P);
+	} else if(text_R) {
+		buf = text_R;
+	} else {
+		return;
+	}
+#ifdef DISPLAY_FUNC_CLEAR
+	DISPLAY_FUNC_CLEAR(spi_screen, screen_buf, 0);
+#endif
+#ifdef DISPLAY_FUNC_DRAW_STRING
+	DISPLAY_FUNC_DRAW_STRING(spi_screen, NULL, screen_buf, buf, x, y, false, false, 0, 1);
+#endif
 }
 

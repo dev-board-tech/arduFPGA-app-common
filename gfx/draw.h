@@ -1,5 +1,5 @@
 /*
- * draw library file for arduFPGA design.
+ * Draw library file for arduFPGA design.
  * 
  * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
  * 
@@ -315,5 +315,8 @@ void draw_circle(spi_t *inst, box_t *box, uint8_t *buf, signed int x, signed int
 void draw_line(spi_t *inst, box_t *box, uint8_t *buf, signed int X1, signed int Y1, signed int X2, signed int Y2, uint8_t width, uint32_t color);
 void draw_elipse(spi_t *inst, box_t *box, uint8_t *buf, signed int x,signed int y,unsigned int rx,unsigned int ry, bool fill, uint32_t color);
 void draw_triangle(spi_t *inst, box_t *box, uint8_t *buf, signed int  ax,signed int  ay,signed int  bx,signed int  by,signed int  cx,signed int  cy, bool fill, uint32_t color);
+
+void draw_msg_and_progress(spi_t *spi_screen, uint8_t *screen_buf, const char *text_P, char *text_R, int32_t progress_min, int32_t progress_max, int32_t progress_value);
+void draw_msg(spi_t *spi_screen, uint8_t *screen_buf, const char *text_P, char *text_R, uint8_t x, uint8_t y);
 
 #endif /* DRAW_H_ */
