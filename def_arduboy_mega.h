@@ -208,8 +208,8 @@
 #define ST7789_DC_PORT				DISPLAY_DC_PORT
 #define ST7789_DC_PIN				DISPLAY_DC_PIN
 
-#define SPI_ST7789_BLK_ASSERT()		SPI_CS_1_PORT &= ~SPI_CS_1_PIN
-#define SPI_ST7789_BLK_DEASSERT()	SPI_CS_1_PORT |= SPI_CS_1_PIN
+#define SPI_ST7735_BLK_ASSERT()		SPI_CS_5_PORT &= ~SPI_CS_5_PIN
+#define SPI_ST7735_BLK_DEASSERT()	SPI_CS_5_PORT |= SPI_CS_5_PIN
 /*******************************************/
 
 #define VS10xx_RST_DIR				DDRD
@@ -218,6 +218,7 @@
 
 #define VS10xx_DREQ_DIR				DDRF
 #define VS10xx_DREQ_PORT			PORTF
+#define VS10xx_DREQ_IN				PINF
 #define VS10xx_DREQ_PIN				(1<<0)
 
 /*******************************************/
