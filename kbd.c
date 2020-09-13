@@ -85,7 +85,7 @@ bool kbd_changed() {
 	bool changed = false;
 	if(last_state ^ state) {
 		changed = true;
-		delay_ms(200);
+		delay_ms(10);
 	}
 	last_state = state;
 	return changed;
