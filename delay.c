@@ -21,8 +21,10 @@
 #include "delay.h"
 #include "def.h"
 
+volatile uint32_t timer_cnt = 0;
+
 void delay_us(uint32_t us) {
-	volatile int32_t us_ = (us * (F_CPU / 37)) - 50;
+	volatile int32_t us_ = (us * (F_CPU / 1000000 / 37)) - 50;
 	if(us_ < 0)
 		return;
 	while(us_--);
@@ -40,4 +42,21 @@ void delay_s(uint16_t s) {
 	if(s_ < 0)
 		return;
 	while(s_--);
+}
+
+void timer_service() {
+	timer_cnt++;
+}
+
+void timer_enable(timer_t *inst, bool enable) {
+	inst->tik = timer_cnt + inst->value;
+	inst->enabled = enable;
+}
+
+bool timer_tik(timer_t *inst) {
+	bool tick = inst->tik < timer_cnt ? inst->enabled : false;
+	if(tick) {
+		inst->tik = timer_cnt + inst->value;
+	}
+	return tick;
 }

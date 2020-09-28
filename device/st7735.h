@@ -25,7 +25,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "def.h"
-#include "spi.h"
+#include "driver/spi.h"
+#include "gfx/draw.h"
 
 
 #define ST7735_MADCTL_MY  0x80

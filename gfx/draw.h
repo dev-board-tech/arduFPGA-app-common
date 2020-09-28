@@ -23,7 +23,7 @@
 
 #include <stdbool.h>
 #include "def.h"
-#include "spi.h"
+#include "driver/spi.h"
 
 #define COLOR_CONVERSION_32_TO_16(COLOR_32) \
 	(uint16_t)(((((uint32_t)COLOR_32 >> 19) & 0x1F) << 11) | (((COLOR_32 >> 10) & 0x3F) << 5) | ((COLOR_32 >> 3) & 0x1F))
@@ -309,6 +309,14 @@
 #define Clr32WhiteSmoke           0x00F5F5F5
 #define Clr32Yellow               0x00FFFF00
 #define Clr32YellowGreen          0x009ACD32
+
+typedef struct {
+	int16_t x_min;
+	int16_t x_max;
+	int16_t y_min;
+	int16_t y_max;
+}box_t;
+
 
 int draw_string(spi_t *inst, box_t *box, uint8_t *buf, char *string, int16_t x, int16_t y, bool terminalMode, bool wordWrap, uint16_t foreColor, uint16_t inkColor);
 void draw_circle(spi_t *inst, box_t *box, uint8_t *buf, signed int x, signed int y, unsigned int _radius, bool fill, uint32_t color);

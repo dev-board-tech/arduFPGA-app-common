@@ -24,6 +24,14 @@
 
 #include "util.h"
 
+bool util_is_hex(char src) {
+	int tmp = tolower((int)src);
+	if((tmp < '0' || tmp > '9') && (tmp < 'a' || tmp > 'f'))
+		return false;
+	else
+		return true;
+}
+
 void util_char_to_hex(char *ptr, uint8_t c) {
 	uint8_t c1 = (c >> 4) & 0x0f, c2 = c & 0x0f;
 	ptr[0] = (c1 + (c1 > 9 ? ('a' - 10) : '0'));
@@ -178,4 +186,19 @@ double util_percent_to_double(double minValue, double maxValue, double maxPercen
 	else if(result < minValue)
 		result = minValue;
 	return result;
+}
+
+void util_str_sort(int n, char **x) {
+	char *temp; // Pointer declaration
+	int i,str;
+	for(str = 0; str < n-1; ++str) {
+		for(i = str+1; i < n; ++i) {
+			if(strcmp(x[str],x[i]) > 0) {
+				temp = x[str]; // compared string being stored in temp
+				x[str] = x[i];
+				x[i] = temp;
+			}
+		}
+	}
+	return;
 }

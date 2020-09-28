@@ -10,7 +10,7 @@
 #define VS10XX_H_
 
 #include <stdbool.h>
-#include "spi.h"
+#include "driver/spi.h"
 
 /*#####################################################*/
 #define VS_SCI_MODE			0x00	//RW	Mode control

@@ -136,8 +136,9 @@ unsigned long arg       /* Argument */
 //#######################################################################################
 bool initCard(mmc_sd_t *inst)
 {
-	*inst->spi_inst->spcr &= ~(1<<0);
-	*inst->spi_inst->spcr |= (1<<1);
+	*inst->spi_inst->spcr = (1 << SPE) | (1 << MSTR) | (0 << SPR1) | (0 << SPR0);
+	//*inst->spi_inst->spcr |= (1 << SPR1);
+	*inst->spi_inst->spsr = (1<<SPI2X);
 	csDeassert(inst);
 	unsigned char cmd, ty, ocr[4], csd[16];
 	unsigned short  n;
@@ -183,7 +184,7 @@ bool initCard(mmc_sd_t *inst)
 	}*/
 	if (ty)
 	{           /* OK */
-		*inst->spi_inst->spcr &= ~(1<<1);
+		*inst->spi_inst->spcr = (1 << SPE) | (1 << MSTR) | (0 << SPR1) | (0 << SPR0);
 		if (sendCmd(inst, CMD9, 0) == 0)
 		{
 			unsigned int wait = 0, response = 0;
@@ -227,7 +228,7 @@ bool initCard(mmc_sd_t *inst)
 	}
 
 	deselect(inst);
-	*inst->spi_inst->spcr &= ~(1<<1);
+	*inst->spi_inst->spcr = (1 << SPE) | (1 << MSTR) | (0 << SPR1) | (0 << SPR0);
 	return inst->SD_Init_OK;
 }
 //#######################################################################################

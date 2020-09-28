@@ -25,7 +25,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "def.h"
-#include "spi.h"
+#include "driver/spi.h"
+#include "gfx/draw.h"
 
 #define SSD1306_BLACK               0    ///< Draw 'off' pixels
 #define SSD1306_WHITE               1    ///< Draw 'on' pixels

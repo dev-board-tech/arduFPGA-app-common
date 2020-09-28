@@ -143,6 +143,7 @@ bool uart_get_c_nb(uint8_t *c) {
 	if ( !(UCSR1A & (1<<RXC1)) )
 		return false;
 	else {
+		asm("nop");
 		*c = UDR1;
 		return true;
 	}
@@ -150,6 +151,7 @@ bool uart_get_c_nb(uint8_t *c) {
 	if ( !(UCSR0A & (1<<RXC0)) )
 		return false;
 	else {
+		asm("nop");
 		*c = UDR0;
 		return true;
 	}

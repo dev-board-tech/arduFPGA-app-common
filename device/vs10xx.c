@@ -19,19 +19,19 @@ static inline void vs10xx_deassert_rst() {
 }
 
 static inline void vs10xx_assert_dcs() {
-	SPI_CS_7_PORT &= ~SPI_CS_7_PIN;
+	SPI_xDCS_CS_ASSERT();
 }
 
 static inline void vs10xx_deassert_dcs() {
-	SPI_CS_7_PORT |= SPI_CS_7_PIN;
+	SPI_xDCS_CS_DEASSERT();
 }
 
 static inline void vs10xx_assert_cs() {
-	SPI_CS_6_PORT &= ~SPI_CS_6_PIN;
+	SPI_xCS_CS_ASSERT();
 }
 
 static inline void vs10xx_deassert_cs() {
-	SPI_CS_6_PORT |= SPI_CS_6_PIN;
+	SPI_xCS_CS_DEASSERT();
 }
 
 void vs10xx_check_busy() {
@@ -69,9 +69,7 @@ uint16_t vs10xx_reg_read(spi_t *spi, unsigned char reg) {
 }
 
 void vs10xx_soft_reset(spi_t *spi) {
-	*spi->spcr |= (1 << SPR1);
-	*spi->spcr &= ~(1 << SPR0);
-	*spi->spsr &= ~(1<<SPI2X);
+	*spi->spcr = (1 << SPE) | (1 << MSTR) | (1 << SPR1) | (0 << SPR0);
 	vs10xx_check_busy();
 	vs10xx_reg_read(spi, VS_SCI_STATUS);
 	vs10xx_reg_write(spi, VS_SCI_MODE, VS_SM_SDINEW | VS_SM_RESET);
@@ -82,9 +80,7 @@ void vs10xx_soft_reset(spi_t *spi) {
 	vs10xx_set_pll(spi, 12288000);
 #endif
 	delay_ms(10);
-	*spi->spcr &= ~(1 << SPR1);
-	*spi->spcr &= ~(1 << SPR0);
-	//*spi->spsr |= (1<<SPI2X);
+	*spi->spcr = (1 << SPE) | (1 << MSTR) | (0 << SPR1) | (0 << SPR0);
 	//vs10xx_reg_write(param, VS_SCI_CLOCKF, 0x2000);
     // Switch on the analog parts
 	//vs10xx_reg_write(spi, VS_SCI_AUDATA, 44101); // 44.1kHz stereo
@@ -94,9 +90,8 @@ void vs10xx_soft_reset(spi_t *spi) {
 }
 
 void vs10xx_hard_reset(spi_t *spi) {
-	*spi->spcr |= (1 << SPR1);
-	*spi->spcr &= ~(1 << SPR0);
-	*spi->spsr &= ~(1<<SPI2X);
+	*spi->spsr = (0<<SPI2X);
+	*spi->spcr = (1 << SPE) | (1 << MSTR) | (1 << SPR1) | (0 << SPR0);
 	vs10xx_assert_rst();
 	delay_ms(1);
 	vs10xx_deassert_rst();
@@ -107,8 +102,7 @@ void vs10xx_hard_reset(spi_t *spi) {
 	vs10xx_set_pll(spi, 12288000);
 #endif
 	delay_ms(10);
-	*spi->spcr &= ~(1 << SPR1);
-	*spi->spcr &= ~(1 << SPR0);
+	*spi->spcr = (1 << SPE) | (1 << MSTR) | (0 << SPR1) | (0 << SPR0);
 	//*spi->spsr |= (1<<SPI2X);
 	vs10xx_reg_read(spi, VS_SCI_STATUS);
 	vs10xx_reg_write(spi, VS_SCI_MODE, VS_SM_SDINEW);

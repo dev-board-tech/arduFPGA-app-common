@@ -24,7 +24,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "spi.h"
+#include "driver/spi.h"
 #include "fat_fs/inc/ff.h"
 
 

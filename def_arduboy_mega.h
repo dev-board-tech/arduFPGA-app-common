@@ -10,7 +10,7 @@
 #define DEF_ARDUBOY_MEGA_H_
 
 #define F_CPU								16000000
-#define FLASH_SIZE							0x8000
+#define FLASH_SIZE							(0x10000 - 0x1000)
 #define EEP_SIZE							0x400
 #define RAM_SIZE							0xA00
 
@@ -247,12 +247,6 @@
 #define AUD_NTSC_EN_PORT_bm			(1 << AUD_NTSC_EN_PORT_bp)
 
 /*******************************************/
-typedef struct {
-	int16_t x_min;
-	int16_t x_max;
-	int16_t y_min;
-	int16_t y_max;
-}box_t;
 /*******************************************/
 /* Platform dependent definitions */
 

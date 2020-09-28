@@ -24,7 +24,7 @@
 #include "delay.h"
 #include "def.h"
 #include "st7735.h"
-#include "spi.h"
+#include "driver/spi.h"
 
 #define DELAY 0x80
 

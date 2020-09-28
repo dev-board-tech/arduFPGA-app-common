@@ -23,7 +23,7 @@
 #define __25FLASH_H__
 
 #include <stdint.h>
-#include "../spi.h"
+#include "driver/spi.h"
 
 typedef struct _25flash_s 
 {

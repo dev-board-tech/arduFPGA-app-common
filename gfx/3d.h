@@ -24,7 +24,7 @@
 
 #include <stdlib.h>
 #include "def.h"
-#include "spi.h"
+#include "driver/spi.h"
 #include "gfx/draw.h"
 #define _depth 1
 

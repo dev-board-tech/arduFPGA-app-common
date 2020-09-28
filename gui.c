@@ -23,7 +23,7 @@
 #include <string.h>
 #include <avr/eeprom.h>
 #include "gui.h"
-#include "spi.h"
+#include "driver/spi.h"
 #include "delay.h"
 //#include "25flash.h"
 #include "fat_fs/inc/ff.h"
@@ -42,7 +42,11 @@ uint16_t items_scanned = 0;
 static const char* const str[] = {_VOLUME_STRS};
 FRESULT res = FR_OK;
 uint8_t fattrib = 0;
+#ifdef MAX_ALLOWED_FILE_NAME_LEN_BUF
 char nameBuff[MAX_ALLOWED_FILE_NAME_LEN_BUF];
+#else
+char nameBuff[1];
+#endif
 extern DIR dirObject;
 extern FILINFO fInfo;
 extern FIL filObject;
@@ -186,7 +190,9 @@ void gui_paint(mmc_sd_t *uSD, spi_t *spi_screen, uint8_t *screen_buf) {
 					if(menu_scan >= menu_pos && menu_scan < menu_pos +  (disp_dn_limit + 1) - disp_up_limit) {
 						if(menu_scan == menu_sel) {
 							fattrib = fInfo.fattrib;
+#ifdef MAX_ALLOWED_FILE_NAME_LEN_BUF
 							strncpy(nameBuff, fInfo.fname, MAX_ALLOWED_FILE_NAME_LEN_BUF);
+#endif
 						}
 // Check and print the selected line.
 						if(file_checked != -1)

@@ -21,8 +21,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <avr/pgmspace.h>
+#include "gfx/draw.h"
 #include "delay.h"
-#include "spi.h"
+#include "driver/spi.h"
 #include "ssd1306.h"
 
 #if __AVR_MEGA__

@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+bool util_is_hex(char src);
 void util_char_to_hex(char *ptr, uint8_t c);
 void util_short_to_hex(char *ptr, uint16_t c);
 void util_long_to_hex(char *ptr, uint32_t c);
@@ -64,6 +65,13 @@ int32_t util_percent_to_int(int32_t minValue, int32_t maxValue, int32_t maxPerce
  * This function convert a Value between 0 and MaxPercentageValue to a value between MinValue and MaxValue.
  */
 double util_percent_to_double(double minValue, double maxValue, double maxPercentageValue, double value);
+
+void util_str_sort(int n, char **x);
+
+typedef struct {
+	uint16_t size;
+	char *str;
+}string;
 
 
 #endif /* UTIL_H_ */
