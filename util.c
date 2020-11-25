@@ -22,6 +22,7 @@
 #include <ctype.h>
 #include <stdint.h>
 
+#include <string.h>
 #include "util.h"
 
 bool util_is_hex(char src) {
@@ -53,12 +54,10 @@ void util_long_to_hex(char *ptr, uint32_t c) {
 	ptr[8] = 0;
 }
 
-void util_get_hex_buf(char *hex_str, unsigned char *data, unsigned int data_len)
-{
+void util_get_hex_buf(char *hex_str, unsigned char *data, unsigned int data_len) {
 	unsigned int cnt = 0;
 	char tmp_str[2];
-	for(; cnt < data_len; cnt++)
-	{
+	for(; cnt < data_len; cnt++) {
 		util_char_to_hex(tmp_str, data[cnt]);
 		hex_str[cnt * 2] = tmp_str[0];
 		hex_str[(cnt * 2) + 1] = tmp_str[1];
@@ -66,15 +65,13 @@ void util_get_hex_buf(char *hex_str, unsigned char *data, unsigned int data_len)
 	hex_str[cnt * 2] = 0;
 }
 
-bool util_get_bin_from_hex_char(unsigned char *dest, char src)
-{
+bool util_get_bin_from_hex_char(unsigned char *dest, char src) {
 	int tmp = tolower((int)src);
 	if((tmp < '0' || tmp > '9') && (tmp < 'a' || tmp > 'f'))
 		return false;
 	if(tmp <= '9')
 		*dest = (tmp - '0') & 0x0F;
-	else
-	{
+	else {
 		*dest = ((tmp - 'a') + 10) & 0x0F;
 	}
 	return true;
@@ -82,8 +79,7 @@ bool util_get_bin_from_hex_char(unsigned char *dest, char src)
 
 unsigned int util_get_bin_from_hex_buf(unsigned char *bin_buff, char *data, unsigned int dest_buff_len) {
 	unsigned int cnt = 0;
-	while(*data != 0 && dest_buff_len != 0)
-	{
+	while(*data != 0 && dest_buff_len != 0) {
 		unsigned char tmp0 = 0;
 		unsigned char tmp1 = 0;
 		if(!util_get_bin_from_hex_char(&tmp1, *data++))
