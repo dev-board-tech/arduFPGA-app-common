@@ -63,40 +63,40 @@
 #define KBD_PORT					PORTA
 #define KBD_IN						PINA
 
-#define KBD_U_DIR					DDRA
-#define KBD_U_PORT					PORTA
-#define KBD_U_IN					PINA
+#define KBD_U_DIR					DDRF
+#define KBD_U_PORT					PORTF
+#define KBD_U_IN					PINF
 #define KBD_U_PIN					(1<<7)
 
-#define KBD_D_DIR					DDRA
-#define KBD_D_PORT					PORTA
-#define KBD_D_IN					PINA
-#define KBD_D_PIN					(1<<6)
+#define KBD_D_DIR					DDRF
+#define KBD_D_PORT					PORTF
+#define KBD_D_IN					PINF
+#define KBD_D_PIN					(1<<4)
 
-#define KBD_B_DIR					DDRA
-#define KBD_B_PORT					PORTA
-#define KBD_B_IN					PINA
-#define KBD_B_PIN					(1<<5)
+#define KBD_B_DIR					DDRB
+#define KBD_B_PORT					PORTB
+#define KBD_B_IN					PINB
+#define KBD_B_PIN					(1<<4)
 
-#define KBD_A_DIR					DDRA
-#define KBD_A_PORT					PORTA
-#define KBD_A_IN					PINA
-#define KBD_A_PIN					(1<<4)
+#define KBD_A_DIR					DDRE
+#define KBD_A_PORT					PORTE
+#define KBD_A_IN					PINE
+#define KBD_A_PIN					(1<<6)
 
 #define KBD_INT_DIR					DDRA
 #define KBD_INT_PORT				PORTA
 #define KBD_INT_IN					PINA
 #define KBD_INT_PIN					(1<<3)
 
-#define KBD_L_DIR					DDRA
-#define KBD_L_PORT					PORTA
-#define KBD_L_IN					PINA
-#define KBD_L_PIN					(1<<2)
+#define KBD_L_DIR					DDRF
+#define KBD_L_PORT					PORTF
+#define KBD_L_IN					PINF
+#define KBD_L_PIN					(1<<5)
 
-#define KBD_R_DIR					DDRA
-#define KBD_R_PORT					PORTA
-#define KBD_R_IN					PINA
-#define KBD_R_PIN					(1<<1)
+#define KBD_R_DIR					DDRF
+#define KBD_R_PORT					PORTF
+#define KBD_R_IN					PINF
+#define KBD_R_PIN					(1<<6)
 
 #define LED_B						0b00100000
 #define LED_R						0b01000000

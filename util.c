@@ -92,6 +92,13 @@ unsigned int util_get_bin_from_hex_buf(unsigned char *bin_buff, char *data, unsi
 	return cnt;
 }
 
+void util_bin_to_hex_string(char *dest_buf, unsigned char *src_buf, unsigned int str_buf_len) {
+	for(unsigned int cnt = 0; cnt < str_buf_len; cnt++) {
+		util_char_to_hex(dest_buf, *src_buf++);
+		dest_buf += 2;
+	}
+}
+
 uint8_t util_dec_to_uchar(char *buf) {
 	return 0;
 }

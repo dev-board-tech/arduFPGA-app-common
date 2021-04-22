@@ -7,7 +7,7 @@
 #include <avr/pgmspace.h>
 #endif
 #include <string.h>
-#include "aes.h"
+#include "aes128.h"
 
 /*****************************************************************************/
 /* Defines:                                                                  */

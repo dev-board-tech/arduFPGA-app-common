@@ -32,6 +32,7 @@ void util_long_to_hex(char *ptr, uint32_t c);
 void util_get_hex_buf(char *hex_str, unsigned char *data, unsigned int data_len);
 bool util_get_bin_from_hex_char(unsigned char *dest, char src);
 unsigned int util_get_bin_from_hex_buf(unsigned char *bin_buff, char *data, unsigned int dest_buff_len);
+void util_bin_to_hex_string(char *dest_buf, unsigned char *src_buf, unsigned int str_buf_len);
 uint8_t util_dec_to_uchar(char *buf);
 /*
  * This function convert a Value between MinValue and MaxValue to a fit into a value from 0 to MaxPercentageValue.

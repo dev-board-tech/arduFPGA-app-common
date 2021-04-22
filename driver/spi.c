@@ -1,7 +1,7 @@
 /*
  * SPI driver file for arduFPGA designs.
  * 
- * Copyright (C) 2020  Iulian Gheorghiu (morgoth@devboard.tech)
+ * Copyright (C) 2020  Iulian Gheorghiu (morgoth@mail.devboard.tech)
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

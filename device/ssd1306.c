@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <avr/pgmspace.h>
+#include <string.h>
 #include "gfx/draw.h"
 #include "delay.h"
 #include "driver/spi.h"
@@ -61,7 +62,7 @@ void ssd1306_init(spi_t *inst, uint8_t *buf) {
 	ssd1306_wr_cmd(inst, 0xF1);
 	ssd1306_wr_cmd(inst, SSD1306_MEMORYMODE);
 	ssd1306_wr_cmd(inst, 0x00);
-
+	
 	delay_ms(2);
 	ssd1306_wr_cmd(inst, SSD1306_DISPLAYON);
 	
@@ -74,10 +75,11 @@ void ssd1306_init(spi_t *inst, uint8_t *buf) {
 	ssd1306_wr_cmd(inst, 0x07);
 	SSD1306_DC_PORT |= SSD1306_DC_PIN;
 #endif
-	for(uint16_t cnt = 1024; cnt > 0; cnt--)
+	uint8_t *_buf = buf;
+	for(uint16_t cnt = 0; cnt < 1024; cnt++)
 	{
 #ifndef SSD1306_USE_NO_BUF
-		*buf++ = 0x00;
+		*_buf++ = 0x00;
 #else
 		spi_wrd_byte(inst, 0x00);
 #endif
@@ -334,8 +336,15 @@ void ssd1306_draw_v_line(spi_t *inst, box_t *box, uint8_t *buf, int16_t y1, int1
 }
 
 void ssd1306_clear(spi_t *inst, uint8_t *buf, bool state) {
-	
+	//uint8_t *_buf = buf;
+#ifndef SSD1306_USE_NO_BUF
+	/*for(uint16_t cnt = 0; cnt < 1024; cnt++) {
+		*_buf++ = state ? 0xFF : 0x00;
+	}*/
+	memset(buf, state ? 0xFF : 0x00, 1024);
+#else
 	ssd1306_draw_rectangle(inst, NULL, buf, 0, 0, 128, 64, 1, state);
+#endif
 }
 
 /*#####################################################*/

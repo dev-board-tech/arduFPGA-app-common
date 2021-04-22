@@ -35,7 +35,8 @@ void kbd_init() {
 	kbd_l_timer.value = 300;
 	kbd_r_timer.value = 300;
 //We do not use KBD PORT setup because is PORTA and this PORT has outputs with different functions than inputs, so we need to let PORTA how was configured in the design at reset time.
-/*#ifdef KBD_L_IN
+#ifdef KBD_USE_INIT
+#ifdef KBD_L_IN
 	KBD_L_DIR &= ~KBD_L_PIN;
 	KBD_L_PORT |= KBD_L_PIN;
 #endif
@@ -58,7 +59,8 @@ void kbd_init() {
 #ifdef KBD_B_IN
 	KBD_B_DIR &= ~KBD_B_PIN;
 	KBD_B_PORT |= KBD_B_PIN;
-#endif*/
+#endif
+#endif
 }
 
 void kbd_idle() {
@@ -92,58 +94,64 @@ void kbd_idle() {
 bool kbd_changed() {
 	bool changed = false;
 #ifdef KBD_USE_TICK
-	if((state & KBD_U_KEY) != (~last_state & KBD_U_KEY)) {
+	if((state & KBD_U_KEY) != (last_state & KBD_U_KEY) && (state & KBD_U_KEY)) {
 		last_state |= KBD_U_KEY;
 		kbd_u_timer.value = 500;
 		timer_enable(&kbd_u_timer, true);
 		changed = true;
-	} else if((~state & KBD_U_KEY) != (last_state & KBD_U_KEY)) {
+	} else if((state & KBD_U_KEY) != (last_state & KBD_U_KEY) && (~state & KBD_U_KEY)) {
 		last_state &= ~KBD_U_KEY;
 		timer_enable(&kbd_u_timer, false);
 	}
-	if((state & KBD_D_KEY) != (~last_state & KBD_D_KEY)) {
+	if((state & KBD_D_KEY) != (last_state & KBD_D_KEY) && (state & KBD_D_KEY)) {
 		last_state |= KBD_D_KEY;
 		kbd_d_timer.value = 500;
 		timer_enable(&kbd_d_timer, true);
 		changed = true;
-	} else if((~state & KBD_D_KEY) != (last_state & KBD_D_KEY)) {
+	} else if((state & KBD_D_KEY) != (last_state & KBD_D_KEY) && (~state & KBD_D_KEY)) {
 		last_state &= ~KBD_D_KEY;
 		timer_enable(&kbd_d_timer, false);
 	}
-	if((state & KBD_L_KEY) != (~last_state & KBD_L_KEY)) {
+	if((state & KBD_L_KEY) != (last_state & KBD_L_KEY) && (state & KBD_L_KEY)) {
 		last_state |= KBD_L_KEY;
 		kbd_l_timer.value = 500;
 		timer_enable(&kbd_l_timer, true);
 		changed = true;
-	} else if((~state & KBD_L_KEY) != (last_state & KBD_L_KEY)) {
+	} else if((state & KBD_L_KEY) != (last_state & KBD_L_KEY) && (~state & KBD_L_KEY)) {
 		last_state &= ~KBD_L_KEY;
 		timer_enable(&kbd_l_timer, false);
 	}
-	if((state & KBD_R_KEY) != (~last_state & KBD_R_KEY)) {
+	if((state & KBD_R_KEY) != (last_state & KBD_R_KEY) && (state & KBD_R_KEY)) {
 		last_state |= KBD_R_KEY;
 		kbd_r_timer.value = 500;
 		timer_enable(&kbd_r_timer, true);
 		changed = true;
-	} else if((~state & KBD_R_KEY) != (last_state & KBD_R_KEY)) {
+	} else if((state & KBD_R_KEY) != (last_state & KBD_R_KEY) && (~state & KBD_R_KEY)) {
 		last_state &= ~KBD_R_KEY;
 		timer_enable(&kbd_r_timer, false);
 	}
 	if(timer_tik(&kbd_u_timer)) {
-		kbd_u_timer.value = 250;
+		kbd_u_timer.value = 150;
 		changed = true;
 	}
 	if(timer_tik(&kbd_d_timer)) {
-		kbd_d_timer.value = 250;
+		kbd_d_timer.value = 150;
 		changed = true;
 	}
 	if(timer_tik(&kbd_l_timer)) {
-		kbd_l_timer.value = 250;
+		kbd_l_timer.value = 150;
 		changed = true;
 	}
 	if(timer_tik(&kbd_r_timer)) {
-		kbd_r_timer.value = 250;
+		kbd_r_timer.value = 150;
 		changed = true;
 	}
+	if((last_state & (KBD_A_KEY | KBD_B_KEY)) ^ (state & (KBD_A_KEY | KBD_B_KEY))) {
+		changed = true;
+		delay_ms(10);
+	}
+	last_state = (last_state & ~(KBD_A_KEY | KBD_B_KEY)) | (state & (KBD_A_KEY | KBD_B_KEY));
+
 #else
 	if(last_state ^ state) {
 		changed = true;

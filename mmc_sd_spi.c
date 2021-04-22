@@ -32,12 +32,16 @@ uint8_t ioData(mmc_sd_t *inst, uint8_t value)
 //#######################################################################################
 void csAssert()
 {
+#ifdef SPI_uSD_CS_ASSERT
 	SPI_uSD_CS_ASSERT();
+#endif
 }
 //#######################################################################################
 void csDeassert()
 {
+#ifdef SPI_uSD_CS_DEASSERT
 	SPI_uSD_CS_DEASSERT();
+#endif
 }
 /*-----------------------------------------------------------------------*/
 /* Wait for card ready                                                   */
@@ -456,7 +460,11 @@ void mmcSdSpiIoctl(void *handler, unsigned int  command,  unsigned int *buffer)
 }
 //#######################################################################################
 bool mmc_sd_connected(void *handler) {
+#ifdef uSD_CD_PIN
 	return (~uSD_CD_IN) & uSD_CD_PIN;
+#else
+	return true;
+#endif
 }
 //#######################################################################################
 void mmc_sd_spi_idle(mmc_sd_t *inst) {
@@ -464,7 +472,7 @@ void mmc_sd_spi_idle(mmc_sd_t *inst) {
 		return;
 	if(inst->unitNr > 2)
 		return;
-	if((~uSD_CD_IN) & uSD_CD_PIN) {
+	if(/*(~uSD_CD_IN) & uSD_CD_PIN*/mmc_sd_connected((void *)inst)) {
 		if(inst->initFlg) {
 #ifdef MMC_SD_LED_DIR
 			uSD_LED_DIR |= uSD_LED_PIN;
