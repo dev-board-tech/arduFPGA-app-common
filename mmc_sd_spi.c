@@ -480,6 +480,7 @@ void mmc_sd_spi_idle(mmc_sd_t *inst) {
 #endif
 			inst->initFlg = 0;
 			delay_ms(400);
+			initCard(inst);
 			if(initCard(inst)) {
 				inst->connected = true;
 				inst->fatFs->drv_rw_func.DriveStruct = (void *)inst;
