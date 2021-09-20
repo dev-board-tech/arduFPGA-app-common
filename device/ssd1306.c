@@ -75,7 +75,9 @@ void ssd1306_init(spi_t *inst, uint8_t *buf) {
 	ssd1306_wr_cmd(inst, 0x07);
 	SSD1306_DC_PORT |= SSD1306_DC_PIN;
 #endif
+#ifndef SSD1306_USE_NO_BUF
 	uint8_t *_buf = buf;
+#endif
 	for(uint16_t cnt = 0; cnt < 1024; cnt++)
 	{
 #ifndef SSD1306_USE_NO_BUF
@@ -349,9 +351,9 @@ void ssd1306_clear(spi_t *inst, uint8_t *buf, bool state) {
 
 /*#####################################################*/
 #ifdef __AVR_MEGA__
-static const uint8_t CharTable6x8[] PROGMEM =
+const uint8_t CharTable6x8[] PROGMEM =
 #else
-static const uint8_t CharTable6x8[] =
+const uint8_t CharTable6x8[] =
 #endif
 {
 	6                          ,0          ,6          ,8          ,32            ,128,

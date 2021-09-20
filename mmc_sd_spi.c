@@ -281,7 +281,7 @@ unsigned int readPage(mmc_sd_t *inst, void* _Buffer, unsigned long block, unsign
 	return nblks ? false : true;    /* Return result */
 }
 //#######################################################################################
-unsigned int mmcSdSpiRead(void *handler, void* _Buffer, unsigned long _block, unsigned int nblks)
+DRESULT mmcSdSpiRead(void *handler, void* _Buffer, unsigned long _block, unsigned int nblks)
 {
 #ifndef GUI_EXPLORER
 	cli();
@@ -307,7 +307,7 @@ unsigned int mmcSdSpiRead(void *handler, void* _Buffer, unsigned long _block, un
 #ifndef GUI_EXPLORER
 			sei();
 #endif
-			return false;
+			return RES_ERROR;
 		}
 		Buffer += 512;
 	} while (--nblks);
@@ -318,7 +318,7 @@ unsigned int mmcSdSpiRead(void *handler, void* _Buffer, unsigned long _block, un
 #ifndef GUI_EXPLORER
 	sei();
 #endif
-	return true;
+	return RES_OK;
 }
 //#######################################################################################
 /* Send multiple byte */
@@ -395,7 +395,7 @@ unsigned int writePage(mmc_sd_t *inst, void* _Buffer, unsigned long block, unsig
 	return nblks ? false : true;    /* Return result */
 }
 //#######################################################################################
-unsigned int mmcSdSpiWrite(void *handler, void* _Buffer, unsigned long _block, unsigned int nblks)
+DRESULT mmcSdSpiWrite(void *handler, void* _Buffer, unsigned long _block, unsigned int nblks)
 {
 #ifndef GUI_EXPLORER
 	cli();
@@ -422,7 +422,7 @@ unsigned int mmcSdSpiWrite(void *handler, void* _Buffer, unsigned long _block, u
 #ifndef GUI_EXPLORER
 			sei();
 #endif
-			return false;
+			return RES_ERROR;
 		}
 		Buffer += 512;
 	} while (--nblks);
@@ -433,13 +433,13 @@ unsigned int mmcSdSpiWrite(void *handler, void* _Buffer, unsigned long _block, u
 #ifndef GUI_EXPLORER
 	sei();
 #endif
-	return true;
+	return RES_OK;
 }
 //#######################################################################################
-void mmcSdSpiIoctl(void *handler, unsigned int  command,  unsigned int *buffer)
+DRESULT mmcSdSpiIoctl(void *handler, unsigned int  command,  unsigned int *buffer)
 {
 	if(!handler)
-		return;
+		return RES_PARERR;
 	mmc_sd_t *inst = (mmc_sd_t *)handler;
 	switch(command) {
 		case GET_SECTOR_COUNT:
@@ -450,13 +450,13 @@ void mmcSdSpiIoctl(void *handler, unsigned int  command,  unsigned int *buffer)
 			break;
 		case CTRL_SYNC :        /* Make sure that no pending write process */
 			select(inst);
-			if (waitReady(inst, 5000) == 0xFF)
-			*buffer = RES_OK;
-			break;
+			if (!waitReady(inst, 5000))
+			return RES_NOTRDY;
 		default:
 			*buffer = 0;
 			break;
 	}
+	return RES_OK;
 }
 //#######################################################################################
 bool mmc_sd_connected(void *handler) {

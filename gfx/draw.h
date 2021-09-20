@@ -317,12 +317,39 @@ typedef struct {
 	int16_t y_max;
 }box_t;
 
+typedef struct gfxString_s{
+    enum {
+	    EDGE_OUTSIDE_UP = 0x1,
+	    EDGE_OUTSIDE_DOWN = 0x2,
+	    EDGE_OUTSIDE_LEFT = 0x4,
+	    EDGE_OUTSIDE_RIGHT = 0x8,
+    }edgeOutside_e;
+    uint8_t edgeTouch;
+    spi_t *spi;
+    DISPLAY_VRAM_TYPE *vram;
+    bool wordWrap;
+    DISPLAY_COLOR_VAR foreColor;
+    DISPLAY_COLOR_VAR inkColor;
+    uint16_t maxLineLen;
+    uint16_t maxLen;
+    uint8_t tabSpaces;
+    bool transparent;
+    uint16_t rowCnt;
+}gfxString_t;
+
 
 int draw_string(spi_t *inst, box_t *box, uint8_t *buf, char *string, int16_t x, int16_t y, bool terminalMode, bool wordWrap, uint16_t foreColor, uint16_t inkColor);
 void draw_circle(spi_t *inst, box_t *box, uint8_t *buf, signed int x, signed int y, unsigned int _radius, bool fill, uint32_t color);
 void draw_line(spi_t *inst, box_t *box, uint8_t *buf, signed int X1, signed int Y1, signed int X2, signed int Y2, uint8_t width, uint32_t color);
 void draw_elipse(spi_t *inst, box_t *box, uint8_t *buf, signed int x,signed int y,unsigned int rx,unsigned int ry, bool fill, uint32_t color);
 void draw_triangle(spi_t *inst, box_t *box, uint8_t *buf, signed int  ax,signed int  ay,signed int  bx,signed int  by,signed int  cx,signed int  cy, bool fill, uint32_t color);
+
+uint8_t getCharHeight4x6();
+uint8_t getCharWidth4x6();
+int getRowsInBox4x6(gfxString_t *inst, box_t *box);
+int getColsInBox4x6(gfxString_t *inst, box_t *box);
+void drawChar4x6(spi_t *inst, box_t *box, uint8_t *vram, int16_t x, int16_t y,  char c, DISPLAY_COLOR_VAR colour);
+int drawStringWindowed4x6(gfxString_t *inst, box_t *box, char *string, int16_t x, int16_t y, int16_t cursorPos, bool cursorState);
 
 void draw_msg_and_progress(spi_t *spi_screen, uint8_t *screen_buf, const char *text_P, char *text_R, int32_t progress_min, int32_t progress_max, int32_t progress_value);
 void draw_msg(spi_t *spi_screen, uint8_t *screen_buf, const char *text_P, char *text_R, uint8_t x, uint8_t y);

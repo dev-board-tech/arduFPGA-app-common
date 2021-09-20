@@ -99,6 +99,45 @@ void util_bin_to_hex_string(char *dest_buf, unsigned char *src_buf, unsigned int
 	}
 }
 
+int util_utoa(int value,char *ptr) {
+	int count = 0, temp;
+	if(ptr == NULL)
+	return 0;
+	if(value == 0) {
+		*ptr = '0';
+		return 1;
+	}
+	for(temp = value; temp > 0; temp /= 10, ptr++);
+	*ptr = '\0';
+	for(temp = value; temp > 0; temp /= 10) {
+		*--ptr = temp%10 + '0';
+		count++;
+	}
+	return count;
+}
+
+int util_itoa(int value,char *ptr) {
+	int count = 0, temp;
+	if(ptr == NULL)
+	return 0;
+	if(value == 0) {
+		*ptr = '0';
+		return 1;
+	}
+	if(value < 0) {
+		value *= (-1);
+		*ptr++ = '-';
+		count++;
+	}
+	for(temp = value; temp > 0; temp /= 10, ptr++);
+	*ptr = '\0';
+	for(temp = value; temp > 0; temp /= 10) {
+		*--ptr = temp%10 + '0';
+		count++;
+	}
+	return count;
+}
+
 uint8_t util_dec_to_uchar(char *buf) {
 	return 0;
 }

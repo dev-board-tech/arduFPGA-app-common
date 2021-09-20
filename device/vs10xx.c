@@ -10,11 +10,11 @@
 #include "delay.h"
 #include "def.h"
  
-static inline void vs10xx_assert_rst() {
+void vs10xx_assert_rst() {
 	VS10xx_RST_PORT &= ~VS10xx_RST_PIN;
 }
 
-static inline void vs10xx_deassert_rst() {
+void vs10xx_deassert_rst() {
 	VS10xx_RST_PORT |= VS10xx_RST_PIN;
 }
 
@@ -55,6 +55,7 @@ void vs10xx_reg_write(spi_t *spi, uint8_t reg, uint16_t value) {
 	buffer[3] = value;
 	spi_wr_buf(spi, buffer, 4);
 	vs10xx_deassert_cs();
+	vs10xx_check_busy();
 }
 
 uint16_t vs10xx_reg_read(spi_t *spi, unsigned char reg) {
@@ -67,31 +68,28 @@ uint16_t vs10xx_reg_read(spi_t *spi, unsigned char reg) {
 	vs10xx_deassert_cs();
 	return value;
 }
-
+#define VS1011
 void vs10xx_soft_reset(spi_t *spi) {
-	*spi->spcr = (1 << SPE) | (1 << MSTR) | (1 << SPR1) | (0 << SPR0);
-	vs10xx_check_busy();
-	vs10xx_reg_read(spi, VS_SCI_STATUS);
-	vs10xx_reg_write(spi, VS_SCI_MODE, VS_SM_SDINEW | VS_SM_RESET);
-	delay_ms(100);
+	*spi->spcr = (1 << SPE) | (1 << MSTR) | (1 << SPR1) | (1 << SPR0);
 #ifdef VS10XX_CRISTAL_FREQ
 	vs10xx_set_pll(spi, VS10XX_CRISTAL_FREQ);
 #else
 	vs10xx_set_pll(spi, 12288000);
 #endif
-	delay_ms(10);
 	*spi->spcr = (1 << SPE) | (1 << MSTR) | (0 << SPR1) | (0 << SPR0);
+	vs10xx_reg_read(spi, VS_SCI_STATUS);
+	vs10xx_reg_write(spi, VS_SCI_MODE, VS_SM_SDINEW | VS_SM_RESET);
 	//vs10xx_reg_write(param, VS_SCI_CLOCKF, 0x2000);
     // Switch on the analog parts
 	//vs10xx_reg_write(spi, VS_SCI_AUDATA, 44101); // 44.1kHz stereo
 	// The next clocksetting allows SPI clocking at 5 MHz, 4 MHz is safe then.
 	//vs10xx_reg_write(spi, VS_SCI_CLOCKF, 6 << 12); // Normal clock settings multiplyer 3.0 = 12.2 MHz
-	delay_ms(1);
+	delay_ms(2);
 }
 
 void vs10xx_hard_reset(spi_t *spi) {
 	*spi->spsr = (0<<SPI2X);
-	*spi->spcr = (1 << SPE) | (1 << MSTR) | (1 << SPR1) | (0 << SPR0);
+	*spi->spcr = (1 << SPE) | (1 << MSTR) | (1 << SPR1) | (1 << SPR0);
 	vs10xx_assert_rst();
 	delay_ms(1);
 	vs10xx_deassert_rst();
@@ -101,17 +99,13 @@ void vs10xx_hard_reset(spi_t *spi) {
 #else
 	vs10xx_set_pll(spi, 12288000);
 #endif
-	delay_ms(10);
 	*spi->spcr = (1 << SPE) | (1 << MSTR) | (0 << SPR1) | (0 << SPR0);
+	//*spi->spcr = (1 << SPE) | (1 << MSTR) | (1 << SPR1) | (0 << SPR0);
 	//*spi->spsr |= (1<<SPI2X);
 	vs10xx_reg_read(spi, VS_SCI_STATUS);
 	vs10xx_reg_write(spi, VS_SCI_MODE, VS_SM_SDINEW);
-	//vs10xx_reg_write(param, VS_SCI_CLOCKF, 0x2000);
-    // Switch on the analog parts
-    //vs10xx_reg_write(spi, VS_SCI_AUDATA, 44101); // 44.1kHz stereo
-    // The next clocksetting allows SPI clocking at 5 MHz, 4 MHz is safe then.
-    //vs10xx_reg_write(spi, VS_SCI_CLOCKF, 6 << 12); // Normal clock settings multiplyer 3.0 = 12.2 MHz
-	delay_ms(1);
+	delay_ms(2);
+	delay_ms(2);
 }
 
 void vs10xx_set_pll(spi_t *spi, uint32_t qFreq) {
@@ -128,6 +122,10 @@ uint16_t vs10xx_get_volume(spi_t *spi) {
 
 void vs10xx_set_bas(spi_t *spi, uint8_t bl, uint8_t bc, uint8_t tl, uint8_t tc ) {
 	vs10xx_reg_write(spi, VS_SCI_BASS, ((bl & 0x000F) << 12) | ((bc & 0x000F) << 8) | ((tl & 0x000F) << 4) | (tc & 0x000F));// 0x7AFA
+}
+
+void vs10xx_send_cancel(spi_t *spi) {
+	vs10xx_reg_write(spi, VS_SCI_MODE, vs10xx_reg_read(spi, VS_SCI_MODE) | VS_SM_CANCEL);// 0x7AFA
 }
 
 void vs10xx_send_null(spi_t *spi, uint16_t len) {

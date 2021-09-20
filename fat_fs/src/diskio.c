@@ -52,10 +52,7 @@ DRESULT disk_read (
 {
 	if(!FatFs[drv]->drv_rw_func.DriveStruct || !FatFs[drv]->drv_rw_func.drv_r_func)
 		return RES_PARERR;
-	if(FatFs[drv]->drv_rw_func.drv_r_func((void*)FatFs[drv]->drv_rw_func.DriveStruct, (void*)buff, sector, count))
-		return RES_OK;
-	else
-		return RES_ERROR;
+	return FatFs[drv]->drv_rw_func.drv_r_func((void*)FatFs[drv]->drv_rw_func.DriveStruct, (void*)buff, sector, count);
 }
 
 
@@ -73,10 +70,7 @@ DRESULT disk_write (
 {
 	if(!FatFs[drv]->drv_rw_func.DriveStruct || !FatFs[drv]->drv_rw_func.drv_w_func)
 		return RES_PARERR;
-	if(FatFs[drv]->drv_rw_func.drv_w_func((void*)FatFs[drv]->drv_rw_func.DriveStruct, (void*)buff, sector, count))
-		return RES_OK;
-	else
-		return RES_ERROR;
+	return FatFs[drv]->drv_rw_func.drv_w_func((void*)FatFs[drv]->drv_rw_func.DriveStruct, (void*)buff, sector, count);
 }
 #endif /* _READONLY */
 

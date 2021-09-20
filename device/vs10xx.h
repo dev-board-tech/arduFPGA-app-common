@@ -512,10 +512,13 @@ void vs10xx_set_pll(spi_t *spi, uint32_t qFreq);
 void vs10xx_set_volume(spi_t *spi, uint8_t r, uint8_t l);
 uint16_t vs10xx_get_volume(spi_t *spi);
 void vs10xx_set_bas(spi_t *spi, uint8_t bl, uint8_t bc, uint8_t tl, uint8_t tc);
+void vs10xx_send_cancel(spi_t *spi);
 void vs10xx_send_null(spi_t *spi, uint16_t len);
 bool vs10xx_send_32B_data(spi_t *spi, uint8_t *buffer);
 bool vs10xx_send_1byte_data(spi_t *spi, uint8_t data);
 void vs10xx_init(spi_t *spi);
+void vs10xx_assert_rst();
+void vs10xx_deassert_rst();
 
 
 #endif /* VS10XX_H_ */
